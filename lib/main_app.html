@@ -6,21 +6,54 @@
 <!-- import polymer-element's definition -->
 <link rel="import" href="../../packages/polymer/polymer.html">
 
-<link rel="import" href="../../packages/paper_elements/paper_input.html">
+<link rel="import" href="../../packages/core_elements/core_splitter.html">
+<link rel="import" href="../../packages/paper_elements/paper_autogrow_textarea.html">
+<link rel="import" href="../../packages/paper_elements/paper_input_decorator.html">
 
-<polymer-element name="main-app">
+<polymer-element name="main-app" layout vertical>
   <template>
     <style>
-      :host {
-        display: block;
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
       }
     </style>
 
-    <textarea value="{{html}}" placeholder="HTML..." style="width: 24%; height: 600px"></textarea>
-    <textarea value="{{dart}}" placeholder="Dart..." style="width: 24%; height: 600px"></textarea>
-
-    <iframe _src="{{toTemplate(html, dart) | base64('text/html')}}" sandbox="allow-scripts" style="width: 48%; height: 600px">
-    </iframe>
+    <div horizontal layout flex>
+      <div flex vertical layout>
+        <div flex>
+          <paper-input-decorator label="HTML" floatinglabel layout vertical flex>
+            <paper-autogrow-textarea>
+              <textarea value="{{html}}" placeholder aria-label="HTML"></textarea>
+            </paper-autogrow-textarea>
+          </paper-input-decorator>
+        </div>
+        <core-splitter direction="up"></core-splitter>
+        <div flex>
+          <paper-input-decorator label="Dart" floatinglabel layout vertical flex>
+            <paper-autogrow-textarea rows="2">
+              <textarea value="{{dart}}" placeholder aria-label="Dart"></textarea>
+            </paper-autogrow-textarea>
+          </paper-input-decorator>
+        </div>
+      </div>
+      <core-splitter direction="left"></core-splitter>
+      <div flex vertical layout>
+        <div flex>
+          <paper-input-decorator label="CSS" floatinglabel layout vertical flex>
+            <paper-autogrow-textarea>
+              <textarea value="{{css}}" placeholder aria-label="CSS"></textarea>
+            </paper-autogrow-textarea>
+          </paper-input-decorator>
+        </div>
+        <core-splitter direction="up"></core-splitter>
+        <div relative flex>
+          <iframe _src="{{toTemplate(html, css, dart) | base64('text/html')}}" sandbox="allow-scripts" fit>
+          </iframe>
+        </div>
+      </div>
+    </div>
   </template>
   <script type="application/dart" src="main_app.dart"></script>
 </polymer-element>

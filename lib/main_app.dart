@@ -5,13 +5,16 @@ import 'package:polymer/polymer.dart';
 import 'dart:html';
 import 'dart:convert';
 import "package:crypto/crypto.dart";
+//import 'package:analyzer/analyzer.dart';
 
 /// A Polymer `<main-app>` element.
 @CustomTag('main-app')
 class MainApp extends PolymerElement {
   @observable String html = '';
 
-  @observable String dart = '';
+  @observable String dart = 'main() {\n}';
+
+  @observable String css = '';
 
   @observable String content = '';
 
@@ -42,17 +45,29 @@ class MainApp extends PolymerElement {
 //    </html>
 //  </script>
 
-  String toTemplate(String html, String dart) => '''<html>
-        <head></head>
-        <body>
-          $html
-          
-          <script type="application/dart" src="${base64('application/dart')(dart)}"></script>
-          <script data-pub-inline src="packages/browser/dart.js"></script>
-        </body>
-      </html>''';
+  String toTemplate(String html, String css, String dart) => '''<!doctype html>
+<html>
+  <head>
+    <style>$css</style>
+  </head>
+  <body>
+    $html
+    
+    <script type="application/dart" src="${base64('application/dart')(validDart(dart))}"></script>
+    <script data-pub-inline src="packages/browser/dart.js"></script>
+  </body>
+</html>''';
 
   base64(contentType) => (String s) => "data:$contentType;base64," + CryptoUtils.bytesToBase64(UTF8.encode(s));
+  validDart(String s) {
+    try{
+      //parseCompilationUnit(s);
+      return s;
+    } catch(e) {
+      print(e);
+      return "";      
+    }
+  }
 
 }
 
