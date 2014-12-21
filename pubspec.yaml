@@ -1,18 +1,21 @@
-name: 'dartlab'
+name: dartlab
 version: 0.0.1
-description: >
-  A starter template for a polymer.dart web app.
-#author: <your name> <email@example.com>
-#homepage: https://www.example.com
+description: A starter template for a polymer.dart web app.
 environment:
   sdk: '>=1.0.0 <2.0.0'
 dependencies:
+  analyzer: '>=0.22.4 <0.23.0'
   browser: any
-  polymer: '>=0.15.0 <0.16.0'
-  paper_elements: '>=0.6.0 <0.7.0'
   core_elements: '>=0.6.0 <0.7.0'
   crypto: any
-  analyzer: ">=0.22.4 <0.23.0"
+  github: '>=2.1.4 <3.0.0'
+  paper_elements: '>=0.6.0 <0.7.0'
+  polymer: '>=0.15.0 <0.16.0'
+  route_hierarchical: '>=0.6.1 <0.7.0'
+dev_dependencies:
+  http: any
+dependency_overrides:
+  quiver: '>=0.20.0 <0.21.0'
 transformers:
 - polymer:
     entry_points: web/index.html

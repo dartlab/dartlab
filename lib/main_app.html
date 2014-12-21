@@ -6,7 +6,9 @@
 <!-- import polymer-element's definition -->
 <link rel="import" href="../../packages/polymer/polymer.html">
 
+<link rel="import" href="../../packages/core_elements/core_icon_button.html">
 <link rel="import" href="../../packages/core_elements/core_splitter.html">
+<link rel="import" href="../../packages/core_elements/core_toolbar.html">
 <link rel="import" href="../../packages/paper_elements/paper_autogrow_textarea.html">
 <link rel="import" href="../../packages/paper_elements/paper_input_decorator.html">
 
@@ -20,6 +22,11 @@
       }
     </style>
 
+    <core-toolbar>
+      <core-icon-button icon="save" on-tap="{{save}}"></core-icon-button>
+      <core-icon-button icon="file-download" on-tap="{{load}}"></core-icon-button>
+      <div flex>DartLab</div>
+    </core-toolbar>
     <div horizontal layout flex>
       <div flex vertical layout>
         <div flex>
