@@ -1,0 +1,31 @@
+<!--
+  Copyright (c) 2014, <your name>. All rights reserved. Use of this source code
+  is governed by a BSD-style license that can be found in the LICENSE file.
+-->
+
+<!-- import polymer-element's definition -->
+<link rel="import" href="../../packages/polymer/polymer.html">
+
+<link rel="import" href="../../packages/core_elements/core_icon_button.html">
+<link rel="import" href="../../packages/core_elements/core_splitter.html">
+<link rel="import" href="../../packages/core_elements/core_toolbar.html">
+<link rel="import" href="../../packages/paper_elements/paper_autogrow_textarea.html">
+<link rel="import" href="../../packages/paper_elements/paper_input_decorator.html">
+
+<polymer-element name="x-preview" vertical layout>
+  <template>
+    <style>
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+    </style>
+
+    <div relative flex>
+      <iframe _src="{{toDataUri(body, css, dart)}}" sandbox="allow-scripts" fit>
+      </iframe>
+    </div>
+  </template>
+  <script type="application/dart" src="preview.dart"></script>
+</polymer-element>

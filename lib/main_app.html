@@ -4,6 +4,9 @@
 -->
 
 <!-- import polymer-element's definition -->
+<link rel="import" href="editor.html">
+<link rel="import" href="preview.html">
+
 <link rel="import" href="../../packages/polymer/polymer.html">
 
 <link rel="import" href="../../packages/core_elements/core_icon_button.html">
@@ -14,14 +17,6 @@
 
 <polymer-element name="main-app" layout vertical>
   <template>
-    <style>
-      iframe {
-        width: 100%;
-        height: 100%;
-        border: 0;
-      }
-    </style>
-
     <core-toolbar>
       <core-icon-button icon="save" on-tap="{{save}}"></core-icon-button>
       <core-icon-button icon="file-download" on-tap="{{load}}"></core-icon-button>
@@ -30,35 +25,20 @@
     <div horizontal layout flex>
       <div flex vertical layout>
         <div flex>
-          <paper-input-decorator label="HTML" floatinglabel layout vertical flex>
-            <paper-autogrow-textarea>
-              <textarea value="{{html}}" placeholder aria-label="HTML"></textarea>
-            </paper-autogrow-textarea>
-          </paper-input-decorator>
+          <x-editor label="HTML" value="{{body}}"></x-editor>
         </div>
         <core-splitter direction="up"></core-splitter>
         <div flex>
-          <paper-input-decorator label="Dart" floatinglabel layout vertical flex>
-            <paper-autogrow-textarea rows="2">
-              <textarea value="{{dart}}" placeholder aria-label="Dart"></textarea>
-            </paper-autogrow-textarea>
-          </paper-input-decorator>
+          <x-editor label="Dart" value="{{dart}}"></x-editor>
         </div>
       </div>
       <core-splitter direction="left"></core-splitter>
       <div flex vertical layout>
         <div flex>
-          <paper-input-decorator label="CSS" floatinglabel layout vertical flex>
-            <paper-autogrow-textarea>
-              <textarea value="{{css}}" placeholder aria-label="CSS"></textarea>
-            </paper-autogrow-textarea>
-          </paper-input-decorator>
+          <x-editor label="CSS" value="{{css}}"></x-editor>
         </div>
         <core-splitter direction="up"></core-splitter>
-        <div relative flex>
-          <iframe _src="{{toTemplate(html, css, dart) | base64('text/html')}}" sandbox="allow-scripts" fit>
-          </iframe>
-        </div>
+        <x-preview body="{{body}}" css="{{css}}" dart="{{dart}}" flex></x-preview>
       </div>
     </div>
   </template>

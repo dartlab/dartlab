@@ -1,0 +1,23 @@
+<!--
+  Copyright (c) 2014, <your name>. All rights reserved. Use of this source code
+  is governed by a BSD-style license that can be found in the LICENSE file.
+-->
+
+<!-- import polymer-element's definition -->
+<link rel="import" href="../../packages/polymer/polymer.html">
+
+<link rel="import" href="../../packages/core_elements/core_icon_button.html">
+<link rel="import" href="../../packages/core_elements/core_splitter.html">
+<link rel="import" href="../../packages/core_elements/core_toolbar.html">
+<link rel="import" href="../../packages/paper_elements/paper_autogrow_textarea.html">
+<link rel="import" href="../../packages/paper_elements/paper_input_decorator.html">
+
+<polymer-element name="x-editor" attributes="label,value" noscript>
+  <template>
+    <paper-input-decorator label="{{label}}" floatinglabel layout vertical flex>
+      <paper-autogrow-textarea id="autogrow">
+        <textarea value="{{value}}" placeholder aria-label="{{label}}"></textarea>
+      </paper-autogrow-textarea>
+    </paper-input-decorator>
+  </template>
+</polymer-element>
