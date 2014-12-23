@@ -2,6 +2,7 @@
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
 import 'dart:convert';
+import 'dart:isolate';
 import 'package:polymer/polymer.dart';
 import "package:crypto/crypto.dart";
 
@@ -9,15 +10,24 @@ import "package:crypto/crypto.dart";
 class Preview extends PolymerElement {
   @published String body = '';
 
+  @published String css = '';
+
   @published String dart = '';
 
-  @published String css = '';
+  @published String dartDataUri = '';
+
+  @observable String dataUri = '';
 
   Preview.created() : super.created();
 
-  String toDataUri(String body, String css, String dart) => toBase64('text/html', toHtmlFile(body, css, dart));
+  bodyChanged(_, body) => dataUri = toDataUri(body, css, dartDataUri);
+  cssChanged(_, css) => dataUri = toDataUri(body, css, dartDataUri);
+  dartChanged(_, dart) => dartDataUri = toBase64('application/dart', validDart(dart));
+  dartDataUriChanged(_, dartDataUri) => dataUri = toDataUri(body, css, dartDataUri);
 
-  String toHtmlFile(String body, String css, String dart) => '''<!doctype html>
+  String toDataUri(String body, String css, String dartDataUri) => toBase64('text/html', toHtmlFile(body, css, dartDataUri));
+
+  String toHtmlFile(String body, String css, String dartDataUri) => '''<!doctype html>
 <html>
   <head>
     <style>$css</style>
@@ -25,7 +35,7 @@ class Preview extends PolymerElement {
   <body>
     $body
     
-    <script type="application/dart" src="${toBase64('application/dart', validDart(dart))}"></script>
+    <script type="application/dart" src="$dartDataUri"></script>
     <script data-pub-inline src="packages/browser/dart.js"></script>
   </body>
 </html>''';
