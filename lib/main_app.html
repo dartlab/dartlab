@@ -1,5 +1,5 @@
 <!--
-  Copyright (c) 2014, <your name>. All rights reserved. Use of this source code
+  Copyright (c) 2014, DartLab. All rights reserved. Use of this source code
   is governed by a BSD-style license that can be found in the LICENSE file.
 -->
 
@@ -12,31 +12,22 @@
 <link rel="import" href="../../packages/core_elements/core_icon_button.html">
 <link rel="import" href="../../packages/core_elements/core_splitter.html">
 <link rel="import" href="../../packages/core_elements/core_toolbar.html">
-<link rel="import" href="../../packages/paper_elements/paper_autogrow_textarea.html">
-<link rel="import" href="../../packages/paper_elements/paper_input_decorator.html">
 
 <polymer-element name="main-app" layout vertical>
   <template>
     <core-toolbar>
-      <core-icon-button icon="save" on-tap="{{save}}"></core-icon-button>
-      <core-icon-button icon="file-download" on-tap="{{load}}"></core-icon-button>
       <div flex>DartLab</div>
+      <core-icon-button icon="save" on-tap="{{save}}"></core-icon-button>
     </core-toolbar>
     <div horizontal layout flex>
       <div flex vertical layout>
-        <div flex>
-          <x-editor label="HTML" value="{{body}}"></x-editor>
-        </div>
+        <x-editor label="HTML" value="{{body}}" language="html" flex></x-editor>
         <core-splitter direction="up"></core-splitter>
-        <div flex>
-          <x-editor label="Dart" value="{{dart}}"></x-editor>
-        </div>
+        <x-editor label="Dart" value="{{dart}}" language="dart" flex></x-editor>
       </div>
       <core-splitter direction="left"></core-splitter>
       <div flex vertical layout>
-        <div flex>
-          <x-editor label="CSS" value="{{css}}"></x-editor>
-        </div>
+        <x-editor label="CSS" value="{{css}}" language="css" flex></x-editor>
         <core-splitter direction="up"></core-splitter>
         <x-preview body="{{body}}" css="{{css}}" dart="{{dart}}" flex></x-preview>
       </div>
