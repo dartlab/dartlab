@@ -22,6 +22,8 @@ class Preview extends PolymerElement {
 
   @observable String htmlUri = '';
 
+  @observable int loading = 0;
+
   final PreviewTemplate previewTemplate;
 
   Preview.created()
@@ -36,7 +38,10 @@ class Preview extends PolymerElement {
   cssChanged(_, css) => htmlJob = scheduleJob(htmlJob, generateHtml, jobDelay);
   dartUriChanged(_, dartUri) => htmlJob = scheduleJob(htmlJob, generateHtml, jobDelay);
 
-  generateDart() => previewTemplate.toDartUrl(dart).then((uri) => dartUri = uri);
+  generateDart() {
+    loading++;
+    previewTemplate.toDartUrl(dart).then((uri) => dartUri = uri).whenComplete(() => loading--);
+  }
   generateHtml() => previewTemplate.toHtmlUri(body, css, dartUri).then((uri) => htmlUri = uri);
 }
 
