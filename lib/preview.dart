@@ -16,60 +16,26 @@ class Preview extends PolymerElement {
 
   @published String dart = '';
 
-  @published String dartDataUri = '';
+  @published String dartUri = '';
 
-  @observable String dataUri = '';
+  @observable String htmlUri = '';
 
-  final bool nativeDart;
+  final PreviewTemplate previewTemplate;
 
   Preview.created()
       : super.created(),
-        nativeDart = window.navigator.userAgent.contains("Dart") {
-    if (!nativeDart) {
-      ReceivePort port = new ReceivePort();
-      // https://try.dartlang.org/compiler_isolate.dart.js
-      Isolate.spawnUri(Uri.base.resolve('compiler_isolate.js'), const <String>[], port.sendPort).then((Isolate isolate) {
-        String sdk = '/sdk.json';
-        print('Using Dart SDK: $sdk');
-        int messageCount = 0;
-        SendPort sendPort;
-        port.listen((message) {
-          messageCount++;
-          switch (messageCount) {
-            case 1:
-              sendPort = message as SendPort;
-              sendPort.send([sdk, port.sendPort]);
-              break;
-            case 2:
-              // Acknowledged Receiving the SDK URI.
-              compilerPort = sendPort;
-              //interaction.onMutation([], observer);
-              dartChanged(null, dart);
-              break;
-            default:
-              // TODO(ahe): Close [port]?
-              print('Unexpected message received: $message');
-              break;
-          }
-        });
-      });
-    }
-  }
+        previewTemplate = window.navigator.userAgent.contains("Dart") ? new DartVMPreviewTemplate() : new JavaScriptPreviewTemplate();
 
-  bodyChanged(_, body) => dataUri = toDataUri(body, css, dartDataUri);
-  cssChanged(_, css) => dataUri = toDataUri(body, css, dartDataUri);
-  dartChanged(_, dart) {
-    if (nativeDart) {
-      dartDataUri = toBase64('application/dart', validDart(dart));
-    } else {
-      new CompilationProcess().start(dart).then((value) => dartDataUri = toBase64('application/javascript', value));
-    }
-  }
-  dartDataUriChanged(_, dartDataUri) => dataUri = toDataUri(body, css, dartDataUri);
+  bodyChanged(_, body) => previewTemplate.toHtmlUri(body, css, dartUri).then((uri) => htmlUri = uri);
+  cssChanged(_, css) => previewTemplate.toHtmlUri(body, css, dartUri).then((uri) => htmlUri = uri);
+  dartChanged(_, dart) => previewTemplate.toDartUrl(dart).then((uri) => dartUri = uri);
+  dartUriChanged(_, dartUri) => previewTemplate.toHtmlUri(body, css, dartUri).then((uri) => htmlUri = uri);
+}
 
-  String toDataUri(String body, String css, String dartDataUri) => toBase64('text/html', toHtmlFile(body, css, dartDataUri));
+abstract class PreviewTemplate {
+  Future<String> toHtmlUri(String body, String css, String dartUri) => new Future.value(_toBase64('text/html', _toHtmlFile(body, css, dartUri)));
 
-  String toHtmlFile(String body, String css, String dartDataUri) => '''<!doctype html>
+  String _toHtmlFile(String body, String css, String dartUri) => '''<!doctype html>
 <html>
   <head>
     <style>$css</style>
@@ -77,52 +43,57 @@ class Preview extends PolymerElement {
   <body>
     $body
     
-    <script type="${nativeDart ? 'application/dart' : 'application/javascript'}" src="$dartDataUri"></script>
-    <script data-pub-inline src="packages/browser/dart.js"></script>
+    ${_toScriptTag(dartUri)}
   </body>
 </html>''';
 
-  String toBase64(String contentType, String content) => "data:$contentType;base64," + CryptoUtils.bytesToBase64(UTF8.encode(content));
+  String _toBase64(String contentType, String content) => "data:$contentType;base64," + CryptoUtils.bytesToBase64(UTF8.encode(content));
 
-  validDart(String s) {
-    try {
-      //parseCompilationUnit(s);
-      return s;
-    } catch (e) {
-      print(e);
-      return "";
-    }
-  }
+  Future<String> toDartUrl(String dart);
+
+  String _toScriptTag(String dartUri);
 }
 
-SendPort compilerPort;
+class DartVMPreviewTemplate extends PreviewTemplate {
+  Future<String> toDartUrl(String dart) => new Future.value(_toBase64('application/dart', dart));
 
+  String _toScriptTag(String dartUri) => '''<script type="application/dart" src="$dartUri"></script><script data-pub-inline src="packages/browser/dart.js"></script>''';
+}
 
-class CompilationProcess {
-  final ReceivePort receivePort = new ReceivePort();
-  final Set<String> seenMessages = new Set<String>();
-  bool isDone = false;
-  bool usesDartHtml = false;
-//  Worker worker;
-//  List<String> objectUrls = <String>[];
-  String firstError;
+class JavaScriptPreviewTemplate extends PreviewTemplate {
+  final Completer _ready = new Completer();
 
-  //static CompilationProcess current;
+  CompilationProcess compilationProcess;
 
-  static bool shouldStartCompilation() {
-    if (compilerPort == null) return false;
-    //if (isMalformedInput) return false;
-    //if (current != null) return current.isDone;
-    return true;
+  JavaScriptPreviewTemplate() {
+    ReceivePort port = new ReceivePort();
+    // https://try.dartlang.org/compiler_isolate.dart.js
+    Isolate.spawnUri(Uri.base.resolve('compiler_isolate.js'), const <String>[], port.sendPort).then((Isolate isolate) {
+      String sdk = '/sdk.json';
+      print('Using Dart SDK: $sdk');
+      port.take(2).listen((message) {
+        if (compilationProcess == null) {
+          SendPort compilerPort = message as SendPort;
+          compilerPort.send([sdk, port.sendPort]);
+          compilationProcess = new CompilationProcess(compilerPort);
+        }
+      }, onDone: _ready.complete);
+    });
   }
 
+  Future<String> toDartUrl(String dart) => _ready.future.then((_) => compilationProcess.start(dart).then((javascript) => _toBase64('application/javascript', javascript)));
+
+  String _toScriptTag(String dartUri) => '''<script type="application/javascript" src="$dartUri"></script>''';
+}
+
+class CompilationProcess {
+  final SendPort compilerPort;
+
+  CompilationProcess(this.compilerPort);
+
   Future start(String source) {
-    if (!shouldStartCompilation()) {
-      receivePort.close();
-      return new Future.value("");
-    }
-//    if (current != null) current.dispose();
-//    current = this;
+    var completer = new Completer();
+    ReceivePort receivePort = new ReceivePort();
     var options = ['--analyze-main', '--no-source-maps',];
 //    if (verboseCompiler) options.add('--verbose');
 //    if (minified) options.add('--minify');
@@ -133,165 +104,35 @@ class CompilationProcess {
     compilerPort.send([['options', options], receivePort.sendPort]);
     compilerPort.send([['communicateViaBlobs', false], receivePort.sendPort]);
     compilerPort.send([source, receivePort.sendPort]);
-    var completer = new Completer();
-    receivePort.listen(onMessage(completer));
+    receivePort.listen(onMessage(receivePort, completer));
     return completer.future;
   }
 
-  void dispose() {
-//    if (worker != null) worker.terminate();
-//    objectUrls.forEach(Url.revokeObjectUrl);
-  }
-
-  onMessage(Completer completer) => (message) {
+  onMessage(ReceivePort receivePort, Completer completer) => (message) {
     String kind = message is String ? message : message[0];
     var data = (message is List && message.length == 2) ? message[1] : null;
     switch (kind) {
       case 'done':
-        return onDone(data);
+        receivePort.close();
+        break;
+      // This is called in browsers that support creating Object URLs in a
+      // web worker.  For example, Chrome and Firefox 21.
       case 'url':
         HttpRequest.getString(data).then(completer.complete);
-        return onUrl(data);
+        break;
+      // This is called in browsers that do not support creating Object
+      // URLs in a web worker.  For example, Safari and Firefox < 21.
       case 'code':
-        return onCode(data);
+        completer.complete(data);
+        break;
       case 'diagnostic':
-        return onDiagnostic(data);
       case 'crash':
-        return onCrash(data);
       case 'failed':
-        return onFail(data);
       case 'dart:html':
-        return onDartHtml(data);
+        print("$kind: $data");
+        break;
       default:
         throw ['Unknown message kind', message];
     }
   };
-
-  onDartHtml(_) {
-    usesDartHtml = true;
-  }
-
-  onFail(_) {
-    print(firstError);
-  }
-
-  onDone(_) {
-    isDone = true;
-    receivePort.close();
-  }
-
-  // This is called in browsers that support creating Object URLs in a
-  // web worker.  For example, Chrome and Firefox 21.
-  onUrl(String url) {
-    print('onUrl: $url');
-
-    //new FileReader().readAsDataUrl(url);
-
-//    objectUrls.add(url);
-//    String wrapper = '''
-//// Fool isolate_helper.dart so it does not think this is an isolate.
-//var window = self;
-//function dartPrint(msg) {
-//  self.postMessage(msg);
-//};
-//self.importScripts("$url");
-//''';
-//    var wrapperUrl = Url.createObjectUrl(new Blob([wrapper], 'application/javascript'));
-//    objectUrls.add(wrapperUrl);
-//
-//    run(wrapperUrl, () => makeOutputFrame(url));
-  }
-
-  // This is called in browsers that do not support creating Object
-  // URLs in a web worker.  For example, Safari and Firefox < 21.
-  onCode(String code) {
-    print('onCode: $code');
-
-//    IFrameElement makeIframe() {
-//      // The obvious thing would be to call [makeOutputFrame], but
-//      // Safari doesn't support access to Object URLs in an iframe.
-//
-//      IFrameElement frame = new IFrameElement()
-//          ..src = 'iframe.html'
-//          ..style.width = '100%'
-//          ..style.height = '0px';
-//      frame.onLoad.listen((_) {
-//        frame.contentWindow.postMessage(['source', code], '*');
-//      });
-//      return frame;
-//    }
-//
-//    String codeWithPrint = '$code\n' 'function dartPrint(msg) { postMessage(msg); }\n';
-//    var url = Url.createObjectUrl(new Blob([codeWithPrint], 'application/javascript'));
-//    objectUrls.add(url);
-//
-//    run(url, makeIframe);
-  }
-
-//  void run(String url, IFrameElement makeIframe()) {
-//    void retryInIframe() {
-//      interaction.aboutToRun();
-//      var frame = makeIframe();
-//      frame.style
-//          ..visibility = 'hidden'
-//          ..position = 'absolute';
-//      outputFrame.parent.insertBefore(frame, outputFrame);
-//      outputFrame = frame;
-//      errorStream(frame).listen(interaction.onIframeError);
-//    }
-//    void onError(String errorMessage) {
-//      interaction.consolePrintLine(errorMessage);
-//      console
-//          ..append(buildButton('Try in iframe', (_) => retryInIframe()))
-//          ..appendText('\n');
-//    }
-//    interaction.aboutToRun();
-//    if (alwaysRunInIframe.value || usesDartHtml && !alwaysRunInWorker) {
-//      retryInIframe();
-//    } else {
-//      runInWorker(url, onError);
-//    }
-//  }
-//
-//  void runInWorker(String url, void onError(String errorMessage)) {
-//    worker = new Worker(url)
-//        ..onMessage.listen((MessageEvent event) {
-//          interaction.consolePrintLine(event.data);
-//        })
-//        ..onError.listen((ErrorEvent event) {
-//          worker.terminate();
-//          worker = null;
-//          onError(event.message);
-//        });
-//  }
-
-  onDiagnostic(Map<String, dynamic> diagnostic) {
-    print('onDiagnostic: $diagnostic');
-//    if (currentSource != source) return;
-//    String kind = diagnostic['kind'];
-//    String message = diagnostic['message'];
-//    if (kind == 'verbose info') {
-//      interaction.verboseCompilerMessage(message);
-//      return;
-//    }
-//    if (kind == 'error' && firstError == null) {
-//      firstError = message;
-//    }
-//    String uri = diagnostic['uri'];
-//    if (uri != '${PRIVATE_SCHEME}:/main.dart') {
-//      interaction.consolePrintLine('$uri: [$kind] $message');
-//      return;
-//    }
-//    int begin = diagnostic['begin'];
-//    int end = diagnostic['end'];
-//    if (begin == null) return;
-//    if (seenMessages.add('$begin:$end: [$kind] $message')) {
-//      // Guard against duplicated messages.
-//      addDiagnostic(kind, message, begin, end);
-//    }
-  }
-
-  onCrash(data) {
-    print('onCrash: $data');
-  }
 }
