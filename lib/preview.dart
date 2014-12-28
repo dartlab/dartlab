@@ -10,6 +10,8 @@ import "package:crypto/crypto.dart";
 
 @CustomTag('x-preview')
 class Preview extends PolymerElement {
+  final Duration jobDelay = const Duration(milliseconds: 300);
+
   @published String body = '';
 
   @published String css = '';
@@ -26,10 +28,16 @@ class Preview extends PolymerElement {
       : super.created(),
         previewTemplate = window.navigator.userAgent.contains("Dart") ? new DartVMPreviewTemplate() : new JavaScriptPreviewTemplate();
 
-  bodyChanged(_, body) => previewTemplate.toHtmlUri(body, css, dartUri).then((uri) => htmlUri = uri);
-  cssChanged(_, css) => previewTemplate.toHtmlUri(body, css, dartUri).then((uri) => htmlUri = uri);
-  dartChanged(_, dart) => previewTemplate.toDartUrl(dart).then((uri) => dartUri = uri);
-  dartUriChanged(_, dartUri) => previewTemplate.toHtmlUri(body, css, dartUri).then((uri) => htmlUri = uri);
+  PolymerJob dartJob, htmlJob;
+
+  dartChanged(_, dart) => dartJob = scheduleJob(dartJob, generateDart, jobDelay);
+
+  bodyChanged(_, body) => htmlJob = scheduleJob(htmlJob, generateHtml, jobDelay);
+  cssChanged(_, css) => htmlJob = scheduleJob(htmlJob, generateHtml, jobDelay);
+  dartUriChanged(_, dartUri) => htmlJob = scheduleJob(htmlJob, generateHtml, jobDelay);
+
+  generateDart() => previewTemplate.toDartUrl(dart).then((uri) => dartUri = uri);
+  generateHtml() => previewTemplate.toHtmlUri(body, css, dartUri).then((uri) => htmlUri = uri);
 }
 
 abstract class PreviewTemplate {
