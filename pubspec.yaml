@@ -12,6 +12,7 @@ dependencies:
   paper_elements: '>=0.6.0 <0.7.0'
   polymer: '>=0.15.0 <0.16.0'
   route_hierarchical: '>=0.6.1 <0.7.0'
+  markdown: ">=0.7.0 <0.8.0"
 dev_dependencies:
   http: any
 #dependency_overrides:

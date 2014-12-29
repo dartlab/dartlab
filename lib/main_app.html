@@ -5,6 +5,7 @@
 
 <!-- import polymer-element's definition -->
 <link rel="import" href="editor.html">
+<link rel="import" href="markdown_view.html">
 <link rel="import" href="preview.html">
 
 <link rel="import" href="../../packages/polymer/polymer.html">
@@ -13,11 +14,15 @@
 <link rel="import" href="../../packages/core_elements/core_splitter.html">
 <link rel="import" href="../../packages/core_elements/core_toolbar.html">
 
+<link rel="import" href="../../packages/paper_elements/paper_dialog.html">
+
 <polymer-element name="main-app" layout vertical>
   <template>
     <core-toolbar>
       <div flex>DartLab</div>
-      <core-icon-button icon="save" on-tap="{{save}}"></core-icon-button>
+      <core-icon-button icon="backup" on-tap="{{save}}"><span>SAVE</span></core-icon-button>
+      <core-icon-button icon="question-answer" on-tap="{{faq}}"><span>FAQ</span></core-icon-button>
+      <core-icon-button icon="info-outline" on-tap="{{about}}"><span>ABOUT</span></core-icon-button>
     </core-toolbar>
     <div horizontal layout flex>
       <div flex vertical layout>
@@ -32,6 +37,12 @@
         <x-preview body="{{body}}" css="{{css}}" dart="{{dart}}" flex></x-preview>
       </div>
     </div>
+    <paper-dialog id="about" class="inverse" backdrop>
+      <markdown-view src="docs/about.md"></markdown-view>
+    </paper-dialog>
+    <paper-dialog id="faq" class="inverse" backdrop>
+      <markdown-view src="docs/faq.md"></markdown-view>
+    </paper-dialog>
   </template>
   <script type="application/dart" src="main_app.dart"></script>
 </polymer-element>

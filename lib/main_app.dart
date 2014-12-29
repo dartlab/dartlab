@@ -72,4 +72,8 @@ class MainApp extends PolymerElement {
       dart = getContent(files, "main.dart");
     });
   }
+
+  about() => toggle('about');
+  faq() => toggle('faq');
+  toggle(String id) => (shadowRoot.querySelector("#$id") as dynamic).toggle();
 }
