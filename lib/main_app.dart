@@ -12,6 +12,8 @@ const emptyChar = '\u200B';
 @CustomTag('main-app')
 class MainApp extends PolymerElement {
   @observable String id = '';
+  
+  @observable String description = '';
 
   @observable String body = '';
 
@@ -40,7 +42,7 @@ class MainApp extends PolymerElement {
     };
 
     var data = {
-      "description": "the description for this gist",
+      "description": description.isEmpty ? "A DartLab experience!" : description,
       "public": true,
       "files": {}
           ..addAll(createFile("body.html", body))
@@ -65,6 +67,7 @@ class MainApp extends PolymerElement {
     HttpRequest.getString("https://api.github.com/gists/$id") //
     .then(JSON.decode) //
     .then((data) {
+      description = data['description'];
       Map<String, Map> files = data['files'];
 
       body = getContent(files, "body.html");

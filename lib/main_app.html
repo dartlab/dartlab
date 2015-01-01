@@ -15,11 +15,13 @@
 <link rel="import" href="../../packages/core_elements/core_toolbar.html">
 
 <link rel="import" href="../../packages/paper_elements/paper_dialog.html">
+<link rel="import" href="../../packages/paper_elements/paper_input.html">
 
 <polymer-element name="main-app" layout vertical>
   <template>
     <core-toolbar>
-      <div flex>DartLab</div>
+      <div>DartLab</div>
+      <paper-input value="{{description}}" label="Describe your experience..." flex></paper-input>
       <core-icon-button icon="backup" on-tap="{{save}}"><span>SAVE</span></core-icon-button>
       <core-icon-button icon="question-answer" on-tap="{{faq}}"><span>FAQ</span></core-icon-button>
       <core-icon-button icon="info-outline" on-tap="{{about}}"><span>ABOUT</span></core-icon-button>
