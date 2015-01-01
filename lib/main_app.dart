@@ -8,27 +8,31 @@ import 'package:route_hierarchical/client.dart';
 
 @CustomTag('main-app')
 class MainApp extends PolymerElement {
-  @observable String id = '';
+  @observable String id;
 
-  @observable String description = '';
+  @observable String description;
 
-  @observable String body = '';
+  @observable Metadata metadata;
 
-  @observable String dart = '';
+  @observable String body;
 
-  @observable String css = '';
+  @observable String dart;
+
+  @observable String css;
 
   Router router = new Router(useFragment: true);
 
   MainApp.created() : super.created() {
     router.root
         ..addRoute(name: 'default', defaultRoute: true, enter: (_) => init())
-        ..addRoute(name: 'id', path: ':id', enter: (RouteEvent e) => load(e.parameters['id']));
+        ..addRoute(name: 'id', path: ':id', enter: (RouteEvent e) => load(id = e.parameters['id']));
     router.listen();
   }
 
   init() => this
+      ..id = ''
       ..description = ''
+      ..metadata = new Metadata()
       ..body = ''
       ..dart = 'main() {\n}'
       ..css = '';
@@ -47,14 +51,22 @@ class MainApp extends PolymerElement {
       body = getFile(files, "body.html");
       css = getFile(files, "style.css");
       dart = getFile(files, "main.dart");
+      Map metadataJson = {};
+      try {
+        metadataJson = JSON.decode(getFile(files, ".metadata.json", defaultValue: '{}')) as Map;
+      } catch (ignore) {}
+      metadata = new Metadata.fromJson(metadataJson);
     }).catchError((_) => id = '');
   }
 
   save() {
+    if (id.isNotEmpty) metadata.history.add(id);
+
     var data = {
       "description": description.isEmpty ? "A DartLab experience!" : description,
       "public": true,
       "files": {}
+          ..addAll(createFile(".metadata.json", new JsonEncoder.withIndent("  ").convert(metadata)))
           ..addAll(createFile("body.html", body))
           ..addAll(createFile("style.css", css))
           ..addAll(createFile("main.dart", dart))
@@ -82,4 +94,19 @@ createFile(String filename, String content) => {
   }
 };
 
-getFile(Map<String, Map> files, String filename) => files[filename] == null ? '' : files[filename]['content'].replaceAll(new RegExp('^$emptyChar\$'), '');
+getFile(Map<String, Map> files, String filename, {String defaultValue: ''}) =>
+    files[filename] == null ? defaultValue : files[filename]['content'].replaceAll(new RegExp('^$emptyChar\$'), defaultValue);
+
+class Metadata {
+  final String origin = 'dartlab.org';
+  final String url = 'http://dartlab.org/#:gistId';
+  List<String> history = [];
+
+  Metadata();
+  Metadata.fromJson(Map m) : history = m['history'] is List ? m['history'] : [];
+  Map toJson() => {
+    'origin': origin,
+    'url': url,
+    'history': history
+  };
+}
