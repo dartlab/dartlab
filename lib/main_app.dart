@@ -6,41 +6,51 @@ import 'dart:html';
 import 'dart:convert';
 import 'package:route_hierarchical/client.dart';
 
-const emptyChar = '\u200B';
-
-/// A Polymer `<main-app>` element.
 @CustomTag('main-app')
 class MainApp extends PolymerElement {
   @observable String id = '';
-  
+
   @observable String description = '';
 
   @observable String body = '';
 
-  @observable String dart = 'main() {\n}';
+  @observable String dart = '';
 
   @observable String css = '';
 
-  var router = new Router();
+  Router router = new Router(useFragment: true);
 
-  /// Constructor used to create instance of MainApp.
   MainApp.created() : super.created() {
-    router.root..addRoute(name: 'id', path: '/:page#:id', enter: load);
+    router.root
+        ..addRoute(name: 'default', defaultRoute: true, enter: (_) => init())
+        ..addRoute(name: 'id', path: ':id', enter: (RouteEvent e) => load(e.parameters['id']));
     router.listen();
   }
 
-  void idChanged(String oldValue, String newValue) => router.go('id', {
-    'page': 'index.html',
-    'id': newValue
-  });
-  
-  save() {
-    createFile(String filename, String content) => {
-      filename: {
-        "content": content.isEmpty ? emptyChar : content
-      }
-    };
+  init() => this
+      ..description = ''
+      ..body = ''
+      ..dart = 'main() {\n}'
+      ..css = '';
 
+  idChanged(_, String id) => router.go('id', {
+    'id': id
+  });
+
+  load(String id) {
+    HttpRequest.getString("https://api.github.com/gists/$id") //
+    .then(JSON.decode) //
+    .then((data) {
+      description = data['description'];
+      Map<String, Map> files = data['files'];
+
+      body = getFile(files, "body.html");
+      css = getFile(files, "style.css");
+      dart = getFile(files, "main.dart");
+    }).catchError((_) => id = '');
+  }
+
+  save() {
     var data = {
       "description": description.isEmpty ? "A DartLab experience!" : description,
       "public": true,
@@ -59,24 +69,17 @@ class MainApp extends PolymerElement {
     .then((data) => id = data['id']);
   }
 
-  load(RouteEvent e) {
-    id = e.parameters['id'];
-
-    getContent(Map<String, Map> files, String filename) => files[filename] == null ? '' : files[filename]['content'].replaceAll(new RegExp('^$emptyChar\$'), '');
-
-    HttpRequest.getString("https://api.github.com/gists/$id") //
-    .then(JSON.decode) //
-    .then((data) {
-      description = data['description'];
-      Map<String, Map> files = data['files'];
-
-      body = getContent(files, "body.html");
-      css = getContent(files, "style.css");
-      dart = getContent(files, "main.dart");
-    });
-  }
-
   about() => toggle('about');
   faq() => toggle('faq');
   toggle(String id) => (shadowRoot.querySelector("#$id") as dynamic).toggle();
 }
+
+const emptyChar = '\u200B';
+
+createFile(String filename, String content) => {
+  filename: {
+    "content": content.isEmpty ? emptyChar : content
+  }
+};
+
+getFile(Map<String, Map> files, String filename) => files[filename] == null ? '' : files[filename]['content'].replaceAll(new RegExp('^$emptyChar\$'), '');
