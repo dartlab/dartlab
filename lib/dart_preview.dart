@@ -40,7 +40,7 @@ class DartPreview extends PolymerElement {
 
   generateDart() {
     loading++;
-    previewTemplate.toDartUrl(dart).then((uri) => dartUri = uri).whenComplete(() => loading--);
+    previewTemplate.toDartUrl(dart).then((uri) => dartUri = uri).catchError(print).whenComplete(() => loading--);
   }
   generateHtml() => previewTemplate.toHtmlUri(body, css, dartUri).then((uri) => htmlUri = uri);
 }
@@ -131,7 +131,7 @@ class CompilationProcess {
       // This is called in browsers that support creating Object URLs in a
       // web worker.  For example, Chrome and Firefox 21.
       case 'url':
-        HttpRequest.getString(data).then(completer.complete);
+        completer.complete(HttpRequest.getString(data));
         break;
       // This is called in browsers that do not support creating Object
       // URLs in a web worker.  For example, Safari and Firefox < 21.
@@ -146,6 +146,7 @@ class CompilationProcess {
       case 'failed':
         print("$kind: $data");
         completer.completeError("$kind: $data");
+        receivePort.close();
         break;
       default:
         throw ['Unknown message kind', message];
