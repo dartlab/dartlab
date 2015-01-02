@@ -1,6 +1,6 @@
 name: dartlab
 version: 0.0.1
-description: Test and share your Dart script, CSS or HTML online with DartLab code editor.
+description: Test and share your Dart script with DartLab.
 environment:
   sdk: '>=1.0.0 <2.0.0'
 dependencies:
