@@ -139,10 +139,13 @@ class CompilationProcess {
         completer.complete(data);
         break;
       case 'diagnostic':
-      case 'crash':
-      case 'failed':
       case 'dart:html':
         print("$kind: $data");
+        break;
+      case 'crash':
+      case 'failed':
+        print("$kind: $data");
+        completer.completeError("$kind: $data");
         break;
       default:
         throw ['Unknown message kind', message];
