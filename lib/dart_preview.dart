@@ -8,8 +8,8 @@ import 'dart:isolate';
 import 'package:polymer/polymer.dart';
 import "package:crypto/crypto.dart";
 
-@CustomTag('x-preview')
-class Preview extends PolymerElement {
+@CustomTag('dart-preview')
+class DartPreview extends PolymerElement {
   final Duration jobDelay = const Duration(milliseconds: 300);
 
   @published String body = '';
@@ -26,7 +26,7 @@ class Preview extends PolymerElement {
 
   final PreviewTemplate previewTemplate;
 
-  Preview.created()
+  DartPreview.created()
       : super.created(),
         previewTemplate = window.navigator.userAgent.contains("Dart") ? new DartVMPreviewTemplate() : new JavaScriptPreviewTemplate();
 

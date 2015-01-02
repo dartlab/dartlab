@@ -4,9 +4,9 @@
 -->
 
 <!-- import polymer-element's definition -->
-<link rel="import" href="editor.html">
+<link rel="import" href="code_editor.html">
+<link rel="import" href="dart_preview.html">
 <link rel="import" href="markdown_view.html">
-<link rel="import" href="preview.html">
 
 <link rel="import" href="../../packages/polymer/polymer.html">
 
@@ -35,15 +35,15 @@
     </core-toolbar>
     <div horizontal layout flex>
       <div flex vertical layout>
-        <x-editor label="HTML" value="{{body}}" language="html" flex></x-editor>
+        <code-editor label="HTML" value="{{body}}" language="html" flex></code-editor>
         <core-splitter direction="up"></core-splitter>
-        <x-editor label="Dart" value="{{dart}}" language="dart" flex></x-editor>
+        <code-editor label="Dart" value="{{dart}}" language="dart" flex></code-editor>
       </div>
       <core-splitter direction="left"></core-splitter>
       <div flex vertical layout>
-        <x-editor label="CSS" value="{{css}}" language="css" flex></x-editor>
+        <code-editor label="CSS" value="{{css}}" language="css" flex></code-editor>
         <core-splitter direction="up"></core-splitter>
-        <x-preview body="{{body}}" css="{{css}}" dart="{{dart}}" flex></x-preview>
+        <dart-preview body="{{body}}" css="{{css}}" dart="{{dart}}" flex></dart-preview>
       </div>
     </div>
     <paper-dialog id="about" class="inverse" backdrop>
