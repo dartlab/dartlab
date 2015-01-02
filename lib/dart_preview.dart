@@ -82,7 +82,7 @@ class JavaScriptPreviewTemplate extends PreviewTemplate {
     ReceivePort port = new ReceivePort();
     // https://try.dartlang.org/compiler_isolate.dart.js
     Isolate.spawnUri(Uri.base.resolve('compiler_isolate.js'), const <String>[], port.sendPort).then((Isolate isolate) {
-      String sdk = '/sdk.json';
+      String sdk = './sdk.json';
       print('Using Dart SDK: $sdk');
       port.take(2).listen((message) {
         if (compilationProcess == null) {
