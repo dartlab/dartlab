@@ -19,8 +19,15 @@
 
 <polymer-element name="main-app" layout vertical>
   <template>
+    <style>
+      .logo {
+        width: 160px;
+        background-image: url(img/dartlab_logo_wordmark.png);
+        background-size: 100% 100%;
+      }
+    </style>
     <core-toolbar>
-      <div>DartLab</div>
+      <a href="http://dartlab.org" class="logo">&nbsp;</a>
       <paper-input value="{{description}}" label="Describe your experience..." flex></paper-input>
       <core-icon-button icon="backup" on-tap="{{save}}"><span>SAVE</span></core-icon-button>
       <core-icon-button icon="question-answer" on-tap="{{faq}}"><span>FAQ</span></core-icon-button>
