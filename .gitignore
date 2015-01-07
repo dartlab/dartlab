@@ -1,4 +1,4 @@
-### Dart ###
+﻿### Dart ###
 # Don’t commit the following directories created by pub.
 .buildlog
 .pub/
@@ -12,7 +12,7 @@ packages
 *.js.map
 
 # Include when developing application packages.
-pubspec.lock
+# pubspec.lock
 
 
 ### DartEditor ###
