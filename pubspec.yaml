@@ -1,5 +1,5 @@
 name: dartlab
-version: 0.1.1
+version: 0.1.2
 description: Test and share your Dart script with DartLab.
 environment:
   sdk: '>=1.0.0 <2.0.0'
