@@ -5,6 +5,10 @@ import 'package:polymer/polymer.dart';
 import 'dart:html';
 import 'dart:convert';
 import 'package:route_hierarchical/client.dart';
+import 'package:usage/usage_html.dart';
+
+final Analytics _analytics = new AnalyticsHtml('UA-58153248-1', 'DartLab', '')..optIn = true;
+sendCurrentScreenView([_]) => _analytics.sendScreenView(window.location.pathname + window.location.search + window.location.hash);
 
 @CustomTag('main-app')
 class MainApp extends PolymerElement {
@@ -23,6 +27,9 @@ class MainApp extends PolymerElement {
   Router router = new Router(useFragment: true);
 
   MainApp.created() : super.created() {
+    //sendCurrentScreenView();
+    window.onHashChange.listen(sendCurrentScreenView);
+
     router.root
         ..addRoute(name: 'default', defaultRoute: true, enter: (_) => init())
         ..addRoute(name: 'id', path: ':id', enter: (RouteEvent e) => load(id = e.parameters['id']));
@@ -78,12 +85,16 @@ class MainApp extends PolymerElement {
     //HttpRequest.request(url, method: id.isEmpty ? "POST" : "PATCH", sendData: JSON.encode(data)) //
     HttpRequest.request(url, method: "POST", sendData: JSON.encode(data)) //
     .then((HttpRequest req) => req.responseText).then(JSON.decode) //
-    .then((data) => id = data['id']);
+    .then((data) => id = data['id']) //
+    .then((_) => _analytics.sendEvent('main', 'save', label: id));
   }
 
   about() => toggle('about');
   faq() => toggle('faq');
-  toggle(String id) => (shadowRoot.querySelector("#$id") as dynamic).toggle();
+  toggle(String id) {
+    (shadowRoot.querySelector("#$id") as dynamic).open();
+    _analytics.sendEvent('main', 'dialog', label: id);
+  }
 }
 
 const emptyChar = '\u200B';
