@@ -24,6 +24,8 @@ class MainApp extends PolymerElement {
 
   @observable String css;
 
+  @observable bool isFullscreen = false;
+
   Router router = new Router(useFragment: true);
 
   MainApp.created() : super.created() {
@@ -89,6 +91,7 @@ class MainApp extends PolymerElement {
     .then((_) => _analytics.sendEvent('main', 'save', label: id));
   }
 
+  fullscreen() => isFullscreen = !isFullscreen;
   about() => toggle('about');
   faq() => toggle('faq');
   toggle(String id) {
