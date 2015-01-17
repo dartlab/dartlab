@@ -9,6 +9,7 @@ import 'package:usage/usage_html.dart';
 
 final Analytics _analytics = new AnalyticsHtml('UA-58153248-1', 'DartLab', '')..optIn = true;
 sendCurrentScreenView([_]) => _analytics.sendScreenView(window.location.pathname + window.location.search + window.location.hash);
+sendButtonClick(String label) => _analytics.sendEvent('button', 'click', label: label);
 
 @CustomTag('main-app')
 class MainApp extends PolymerElement {
@@ -91,12 +92,15 @@ class MainApp extends PolymerElement {
     .then((_) => _analytics.sendEvent('main', 'save', label: id));
   }
 
-  fullscreen() => isFullscreen = !isFullscreen;
-  about() => toggle('about');
-  faq() => toggle('faq');
-  toggle(String id) {
+  fullscreen() {
+    isFullscreen = !isFullscreen;
+    sendButtonClick('fullscreen');
+  }
+  about() => openDialog('about');
+  faq() => openDialog('faq');
+  openDialog(String id) {
     (shadowRoot.querySelector("#$id") as dynamic).open();
-    _analytics.sendEvent('main', 'dialog', label: id);
+    sendButtonClick(id);
   }
 }
 
