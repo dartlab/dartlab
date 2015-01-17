@@ -10,29 +10,51 @@
 
 <link rel="import" href="../../packages/polymer/polymer.html">
 
+<link rel="import" href="../../packages/core_elements/core_icon.html">
 <link rel="import" href="../../packages/core_elements/core_splitter.html">
 <link rel="import" href="../../packages/core_elements/core_toolbar.html">
 
 <link rel="import" href="../../packages/paper_elements/paper_dialog.html">
+<link rel="import" href="../../packages/paper_elements/paper_dropdown.html">
 <link rel="import" href="../../packages/paper_elements/paper_icon_button.html">
 <link rel="import" href="../../packages/paper_elements/paper_input.html">
+<link rel="import" href="../../packages/paper_elements/paper_item.html">
+<link rel="import" href="../../packages/paper_elements/paper_menu_button.html">
+<link rel="import" href="../../packages/paper_elements/paper_shadow.html">
 
 <polymer-element name="main-app" layout vertical>
   <template>
     <style>
       .logo {
         width: 160px;
+        height: 28px;
         background-image: url(img/dartlab_logo_wordmark.png);
         background-size: 100% 100%;
+      }
+
+      core-icon {
+        margin-right: 0.5em;
+      }
+
+      /* Workaround for https://github.com/dart-lang/paper-elements/issues/57 */
+      paper-menu-button {
+        font-size: 0px;
       }
     </style>
     <core-toolbar>
       <a href="http://dartlab.org" class="logo">&nbsp;</a>
       <paper-input value="{{description}}" label="Describe your experience..." flex></paper-input>
-      <paper-icon-button fill icon="backup" on-tap="{{save}}" title="Save"><span>SAVE</span></paper-icon-button>
-      <paper-icon-button fill icon="{{ isFullscreen ? 'flip-to-back' : 'flip-to-front' }}" on-tap="{{fullscreen}}" toggle title="Fullscreen"></paper-icon-button>
-      <paper-icon-button fill icon="question-answer" on-tap="{{faq}}" title="FAQ"><span>FAQ</span></paper-icon-button>
-      <paper-icon-button fill icon="info-outline" on-tap="{{about}}" title="About"><span>ABOUT</span></paper-icon-button>
+      <paper-icon-button icon="backup" on-tap="{{save}}" title="Save"></paper-icon-button>
+      <paper-icon-button icon="{{ isFullscreen ? 'flip-to-back' : 'flip-to-front' }}" on-tap="{{fullscreen}}" toggle title="Fullscreen"></paper-icon-button>
+      <paper-menu-button>
+        <paper-icon-button icon="menu"></paper-icon-button>
+        <paper-dropdown class="dropdown" halign="right" valign="top">
+          <paper-shadow z="3">
+            <paper-item on-tap="{{faq}}" title="FAQ"><core-icon icon="question-answer"></core-icon> FAQ</paper-item>
+            <paper-item on-tap="{{about}}" title="About"><core-icon icon="info-outline"></core-icon> About</paper-item>
+          </paper-shadow>
+        </paper-dropdown>
+      </paper-menu-button>
     </core-toolbar>
     <div horizontal layout relative flex>
       <div flex vertical layout>
