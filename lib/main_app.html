@@ -45,9 +45,18 @@
       <a href="http://dartlab.org" class="logo">&nbsp;</a>
       <paper-input value="{{description}}" label="Describe your experience..." flex></paper-input>
       <paper-icon-button icon="backup" on-tap="{{save}}" title="Save"></paper-icon-button>
-      <paper-icon-button icon="{{ isFullscreen ? 'flip-to-back' : 'flip-to-front' }}" on-tap="{{fullscreen}}" toggle title="Fullscreen"></paper-icon-button>
       <paper-menu-button>
-        <paper-icon-button icon="menu"></paper-icon-button>
+        <paper-icon-button icon="reply" title="Share"></paper-icon-button>
+        <paper-dropdown class="dropdown" halign="right" valign="top">
+          <paper-shadow z="3">
+            <paper-item on-tap="{{gplus}}" title="Google+"><core-icon src="packages/dartlab/img/gplus-32.png"></core-icon> Google+</paper-item>
+            <paper-item on-tap="{{twitter}}" title="Twitter"><core-icon src="packages/dartlab/img/Twitter_logo_blue_32.png"></core-icon> Twitter</paper-item>
+          </paper-shadow>
+        </paper-dropdown>
+      </paper-menu-button>
+      <paper-icon-button icon="aspect-ratio" on-tap="{{fullscreen}}" toggle title="Fullscreen"></paper-icon-button>
+      <paper-menu-button>
+        <paper-icon-button icon="menu" title="Menu"></paper-icon-button>
         <paper-dropdown class="dropdown" halign="right" valign="top">
           <paper-shadow z="3">
             <paper-item on-tap="{{faq}}" title="FAQ"><core-icon icon="question-answer"></core-icon> FAQ</paper-item>

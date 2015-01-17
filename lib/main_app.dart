@@ -92,6 +92,16 @@ class MainApp extends PolymerElement {
     .then((_) => _analytics.sendEvent('main', 'save', label: id));
   }
 
+  twitter() {
+    var text = Uri.encodeComponent('Awesome! ' + (description.isEmpty ? 'DartLab' : description));
+    openShareLink('twitter', 'https://twitter.com/intent/tweet?hashtags=dartlab&via=TheDartLab&text=$text&url=');
+  }
+  gplus() => openShareLink('gplus', 'https://plus.google.com/share?url=');
+  openShareLink(String button, String url) {
+    var currentLocation = Uri.encodeComponent(window.location.toString());
+    window.open(url + currentLocation, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');
+    sendButtonClick(button);
+  }
   fullscreen() {
     isFullscreen = !isFullscreen;
     sendButtonClick('fullscreen');
