@@ -99,7 +99,7 @@ class MainApp extends PolymerElement {
   gplus() => openShareLink('gplus', 'https://plus.google.com/share?url=');
   openShareLink(String button, String url) {
     var currentLocation = Uri.encodeComponent(window.location.toString());
-    window.open(url + currentLocation, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');
+    window.open(url + currentLocation, '_blank', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');
     sendButtonClick(button);
   }
   fullscreen() {
