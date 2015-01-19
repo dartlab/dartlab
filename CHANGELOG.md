@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2
+
+### Fullscreen mode & Share links
+
+* Add fullscreen mode
+* Share on Twitter and Google+ links
+
 ## 0.1.1
 
 ### Bug fixes
