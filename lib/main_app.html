@@ -56,7 +56,7 @@
     <core-toolbar>
       <a href="http://dartlab.org" class="logo">&nbsp;</a>
       <paper-input value="{{description}}" label="Describe your experience..." flex></paper-input>
-      <paper-icon-button icon="aspect-ratio" on-tap="{{fullscreen}}" title="Fullscreen" active?="{{isFullscreen}}"></paper-icon-button>
+      <paper-icon-button icon="aspect-ratio" on-tap="{{fullscreen}}" title="Fullscreen" toggle active?="{{isFullscreen}}"></paper-icon-button>
       <paper-icon-button icon="save" on-tap="{{save}}" title="Save"></paper-icon-button>
       <paper-menu-button>
         <paper-icon-button icon="reply" title="Share"></paper-icon-button>
@@ -79,13 +79,13 @@
     </core-toolbar>
     <div horizontal layout relative flex>
       <div flex vertical layout>
-        <code-editor label="HTML" value="{{body}}"></code-editor>
+        <code-editor label="HTML" mode="htmlmixed" autoCloseTags="true" value="{{body}}"></code-editor>
         <core-splitter direction="up" minSize="150px"></core-splitter>
-        <code-editor label="Dart" value="{{dart}}" flex></code-editor>
+        <code-editor label="DART" mode="dart" value="{{dart}}" flex></code-editor>
       </div>
       <core-splitter direction="left"></core-splitter>
       <div flex vertical layout>
-        <code-editor label="CSS" value="{{css}}"></code-editor>
+        <code-editor label="CSS" mode="css" value="{{css}}"></code-editor>
         <core-splitter direction="up" minSize="150px"></core-splitter>
         <dart-preview id="preview" body="{{body}}" css="{{css}}" dart="{{dart}}" fit?="{{isFullscreen}}" flex></dart-preview>
       </div>
