@@ -7,6 +7,7 @@ import 'package:unittest/unittest.dart';
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:html5lib/parser.dart' as html5lib;
 import 'package:observe/observe.dart';
 
 part '../../lib/src/gist_client.dart';
@@ -17,7 +18,7 @@ main() {
     GistClient client = new GistClient();
     var apiUrl = "https://api.github.com/gists";
 
-    test('should load Gist and deserialize Workbench', () {
+    test('should load old Gist format and deserialize Workbench', () {
       // GIVEN
       var response = JSON.encode({
         "id": "42",
@@ -51,8 +52,59 @@ main() {
         expect(w.body, equals("HTML content"));
         expect(w.css, equals("CSS content"));
         expect(w.dart, equals("Dart content"));
-        expect(w.metadata, isNotNull);
-        expect(w.metadata.history, equals(["1", "2", "3"]));
+      });
+    });
+
+    test('should load new Gist format and deserialize Workbench', () {
+      // GIVEN
+      var response = JSON.encode({
+        "id": "42",
+        "files": {
+          "index.html": {
+            "content": fullHtml('HTML content')
+          },
+          "style.css": {
+            "content": "CSS content"
+          },
+          "main.dart": {
+            "content": "Dart content"
+          }
+        },
+        "description": "The description"
+      });
+
+      HttpRequest.getString = (url) {
+        expect(url, equals("$apiUrl/gistId"));
+        return new Future.value(response);
+      };
+
+      // WHEN
+      return client.load("gistId").then((Workbench w) {
+        // THEN
+        expect(w.id, equals("42"));
+        expect(w.description, equals("The description"));
+        expect(w.body, equals("HTML content"));
+        expect(w.css, equals("CSS content"));
+        expect(w.dart, equals("Dart content"));
+      });
+    });
+
+    test('should load new Gist format and deserialize Workbench without body tag', () {
+      // GIVEN
+      var response = JSON.encode({
+        "files": {
+          "index.html": {
+            "content": '<h1>HTML content</h1>'
+          },
+        }
+      });
+
+      HttpRequest.getString = (url) => new Future.value(response);
+
+      // WHEN
+      return client.load(null).then((Workbench w) {
+        // THEN
+        expect(w.body, equals("<h1>HTML content</h1>"));
       });
     });
 
@@ -63,28 +115,33 @@ main() {
           ..description = "The description"
           ..body = "HTML content"
           ..css = "CSS content"
-          ..dart = "Dart content"
-          ..metadata = (new Metadata()..history.addAll(["1", "2", "3"]));
+          ..dart = "Dart content";
 
       var expectedData = JSON.encode({
         "description": "The description",
         "public": true,
         "files": {
-          ".metadata.json": {
-            "content": new JsonEncoder.withIndent("  ").convert((new Metadata()..history.addAll(["1", "2", "3", "666"])).toJson())
-          },
-          "body.html": {
-            "content": "HTML content"
+          "index.html": {
+            "content": fullHtml('HTML content')
           },
           "style.css": {
             "content": "CSS content"
           },
           "main.dart": {
             "content": "Dart content"
+          },
+          "pubspec.yaml": {
+            "content": fullPubspec('the_description')
+          },
+          "README.md": {
+            "content": fullReadme('The description')
+          },
+          ".gitignore": {
+            "content": gitignore
           }
         }
       });
-      
+
       var response = '{"id": "42"}';
 
       HttpRequest.request = (url, {String method, sendData}) {
@@ -102,11 +159,9 @@ main() {
         expect(w.body, equals("HTML content"));
         expect(w.css, equals("CSS content"));
         expect(w.dart, equals("Dart content"));
-        expect(w.metadata, isNotNull);
-        expect(w.metadata.history, equals(["1", "2", "3", "666"]));
       });
     });
-    
+
     test('should save empty Workbench on Gist', () {
       // GIVEN
       Workbench w = new Workbench();
@@ -115,21 +170,21 @@ main() {
         "description": "A DartLab experience!",
         "public": true,
         "files": {
-          ".metadata.json": {
-            "content": new JsonEncoder.withIndent("  ").convert(new Metadata().toJson())
+          "index.html": {
+            "content": fullHtml('')
           },
-          "body.html": {
-            "content": "\u200B"
+          "pubspec.yaml": {
+            "content": fullPubspec('a_dartlab_experience')
           },
-          "style.css": {
-            "content": "\u200B"
+          "README.md": {
+            "content": fullReadme('A DartLab experience!')
           },
-          "main.dart": {
-            "content": "\u200B"
+          ".gitignore": {
+            "content": gitignore
           }
         }
       });
-      
+
       var response = '{"id": "42"}';
 
       HttpRequest.request = (url, {String method, sendData}) {
@@ -147,12 +202,42 @@ main() {
         expect(w.body, isEmpty);
         expect(w.css, isEmpty);
         expect(w.dart, isEmpty);
-        expect(w.metadata, isNotNull);
-        expect(w.metadata.history, equals([]));
       });
     });
   });
 }
+
+fullHtml(String body) => '''<!DOCTYPE html>
+
+<html>
+<head>
+  <script src="packages/browser/dart.js"></script>
+  <script type="application/dart" src="main.dart" async></script>
+  <link href="styles.css" rel="stylesheet" media="screen">
+</head>
+<body>
+$body
+</body>
+</html>''';
+
+fullPubspec(String name) => '''name: $name
+dependencies:
+  browser: any''';
+
+fullReadme(String description) => '''# $description
+
+Created using [DartLab.org](http://dartlab.org).''';
+
+const gitignore = '''*.dart.js
+*.js.deps
+*.js.map
+.buildlog
+pubspec.lock
+
+.pub/
+.settings/
+build/
+packages''';
 
 /// HttpRequest mock.
 class HttpRequest {
