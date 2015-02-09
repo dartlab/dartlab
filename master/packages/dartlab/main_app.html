@@ -1,0 +1,101 @@
+<!--
+  Copyright (c) 2014, DartLab. All rights reserved. Use of this source code
+  is governed by a BSD-style license that can be found in the LICENSE file.
+-->
+
+<!-- import polymer-element's definition -->
+<link rel="import" href="code_editor.html">
+<link rel="import" href="dart_preview.html">
+<link rel="import" href="markdown_view.html">
+
+<link rel="import" href="../../packages/polymer/polymer.html">
+
+<link rel="import" href="../../packages/core_elements/core_icon.html">
+<link rel="import" href="../../packages/core_elements/core_splitter.html">
+<link rel="import" href="../../packages/core_elements/core_toolbar.html">
+
+<link rel="import" href="../../packages/paper_elements/paper_dialog.html">
+<link rel="import" href="../../packages/paper_elements/paper_dropdown.html">
+<link rel="import" href="../../packages/paper_elements/paper_icon_button.html">
+<link rel="import" href="../../packages/paper_elements/paper_input.html">
+<link rel="import" href="../../packages/paper_elements/paper_item.html">
+<link rel="import" href="../../packages/paper_elements/paper_menu_button.html">
+<link rel="import" href="../../packages/paper_elements/paper_shadow.html">
+
+<polymer-element name="main-app" layout vertical>
+  <template>
+    <style>
+      .logo {
+        width: 160px;
+        height: 28px;
+        background-image: url(img/dartlab_logo_wordmark.png);
+        background-size: 100% 100%;
+      }
+
+      core-icon {
+        margin-right: 0.5em;
+      }
+
+      /* Workaround for https://github.com/dart-lang/paper-elements/issues/57 */
+      paper-menu-button {
+        font-size: 0px;
+      }
+
+      core-splitter {
+        background-color: #424b4b;
+        box-shadow: none;
+        color: #fff;
+        fill: #fff;
+      }
+
+      core-splitter:hover,
+      core-splitter:active {
+        background-color: #444;
+      }
+    </style>
+    <core-toolbar>
+      <a href="http://dartlab.org" class="logo">&nbsp;</a>
+      <paper-input value="{{description}}" label="Describe your experience..." flex></paper-input>
+      <paper-icon-button icon="aspect-ratio" on-tap="{{fullscreen}}" title="Fullscreen" active?="{{isFullscreen}}"></paper-icon-button>
+      <paper-icon-button icon="save" on-tap="{{save}}" title="Save"></paper-icon-button>
+      <paper-menu-button>
+        <paper-icon-button icon="reply" title="Share"></paper-icon-button>
+        <paper-dropdown class="dropdown" halign="right" valign="top">
+          <paper-shadow z="3">
+            <paper-item on-tap="{{gplus}}" title="Google+"><core-icon src="packages/dartlab/img/gplus-32.png"></core-icon> Google+</paper-item>
+            <paper-item on-tap="{{twitter}}" title="Twitter"><core-icon src="packages/dartlab/img/Twitter_logo_blue_32.png"></core-icon> Twitter</paper-item>
+          </paper-shadow>
+        </paper-dropdown>
+      </paper-menu-button>
+      <paper-menu-button>
+        <paper-icon-button icon="help" title="Help"></paper-icon-button>
+        <paper-dropdown class="dropdown" halign="right" valign="top">
+          <paper-shadow z="3">
+            <paper-item on-tap="{{faq}}" title="FAQ"><core-icon icon="question-answer"></core-icon> FAQ</paper-item>
+            <paper-item on-tap="{{about}}" title="About"><core-icon icon="info-outline"></core-icon> About</paper-item>
+          </paper-shadow>
+        </paper-dropdown>
+      </paper-menu-button>
+    </core-toolbar>
+    <div horizontal layout relative flex>
+      <div flex vertical layout>
+        <code-editor label="HTML" value="{{body}}"></code-editor>
+        <core-splitter direction="up" minSize="150px"></core-splitter>
+        <code-editor label="Dart" value="{{dart}}" flex></code-editor>
+      </div>
+      <core-splitter direction="left"></core-splitter>
+      <div flex vertical layout>
+        <code-editor label="CSS" value="{{css}}"></code-editor>
+        <core-splitter direction="up" minSize="150px"></core-splitter>
+        <dart-preview id="preview" body="{{body}}" css="{{css}}" dart="{{dart}}" fit?="{{isFullscreen}}" flex></dart-preview>
+      </div>
+    </div>
+    <paper-dialog id="about" class="inverse" backdrop>
+      <markdown-view src="docs/about.md"></markdown-view>
+    </paper-dialog>
+    <paper-dialog id="faq" class="inverse" backdrop>
+      <markdown-view src="docs/faq.md"></markdown-view>
+    </paper-dialog>
+  </template>
+  <script type="application/dart" src="main_app.dart"></script>
+</polymer-element>
