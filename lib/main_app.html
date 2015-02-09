@@ -40,6 +40,18 @@
       paper-menu-button {
         font-size: 0px;
       }
+
+      core-splitter {
+        background-color: #424b4b;
+        box-shadow: none;
+        color: #fff;
+        fill: #fff;
+      }
+
+      core-splitter:hover,
+      core-splitter:active {
+        background-color: #444;
+      }
     </style>
     <core-toolbar>
       <a href="http://dartlab.org" class="logo">&nbsp;</a>
@@ -67,14 +79,14 @@
     </core-toolbar>
     <div horizontal layout relative flex>
       <div flex vertical layout>
-        <code-editor label="HTML" value="{{body}}" flex></code-editor>
-        <core-splitter direction="up"></core-splitter>
+        <code-editor label="HTML" value="{{body}}"></code-editor>
+        <core-splitter direction="up" minSize="150px"></core-splitter>
         <code-editor label="Dart" value="{{dart}}" flex></code-editor>
       </div>
       <core-splitter direction="left"></core-splitter>
       <div flex vertical layout>
-        <code-editor label="CSS" value="{{css}}" flex></code-editor>
-        <core-splitter direction="up"></core-splitter>
+        <code-editor label="CSS" value="{{css}}"></code-editor>
+        <core-splitter direction="up" minSize="150px"></core-splitter>
         <dart-preview id="preview" body="{{body}}" css="{{css}}" dart="{{dart}}" fit?="{{isFullscreen}}" flex></dart-preview>
       </div>
     </div>
