@@ -1,0 +1,57 @@
+<!--
+  Copyright (c) 2014, DartLab. All rights reserved. Use of this source code
+  is governed by a BSD-style license that can be found in the LICENSE file.
+-->
+
+<!-- import polymer-element's definition -->
+<link rel="import" href="code_editor.html">
+<link rel="import" href="dart_preview.html">
+<link rel="import" href="markdown_view.html">
+
+<link rel="import" href="../../packages/polymer/polymer.html">
+
+<link rel="import" href="../../packages/core_elements/core_icon_button.html">
+<link rel="import" href="../../packages/core_elements/core_splitter.html">
+<link rel="import" href="../../packages/core_elements/core_toolbar.html">
+
+<link rel="import" href="../../packages/paper_elements/paper_dialog.html">
+<link rel="import" href="../../packages/paper_elements/paper_input.html">
+
+<polymer-element name="main-app" layout vertical>
+  <template>
+    <style>
+      .logo {
+        width: 160px;
+        background-image: url(img/dartlab_logo_wordmark.png);
+        background-size: 100% 100%;
+      }
+    </style>
+    <core-toolbar>
+      <a href="http://dartlab.org" class="logo">&nbsp;</a>
+      <paper-input value="{{description}}" label="Describe your experience..." flex></paper-input>
+      <core-icon-button icon="backup" on-tap="{{save}}"><span>SAVE</span></core-icon-button>
+      <core-icon-button icon="question-answer" on-tap="{{faq}}"><span>FAQ</span></core-icon-button>
+      <core-icon-button icon="info-outline" on-tap="{{about}}"><span>ABOUT</span></core-icon-button>
+    </core-toolbar>
+    <div horizontal layout flex>
+      <div flex vertical layout>
+        <code-editor label="HTML" value="{{body}}" flex></code-editor>
+        <core-splitter direction="up"></core-splitter>
+        <code-editor label="Dart" value="{{dart}}" flex></code-editor>
+      </div>
+      <core-splitter direction="left"></core-splitter>
+      <div flex vertical layout>
+        <code-editor label="CSS" value="{{css}}" flex></code-editor>
+        <core-splitter direction="up"></core-splitter>
+        <dart-preview body="{{body}}" css="{{css}}" dart="{{dart}}" flex></dart-preview>
+      </div>
+    </div>
+    <paper-dialog id="about" class="inverse" backdrop>
+      <markdown-view src="docs/about.md"></markdown-view>
+    </paper-dialog>
+    <paper-dialog id="faq" class="inverse" backdrop>
+      <markdown-view src="docs/faq.md"></markdown-view>
+    </paper-dialog>
+  </template>
+  <script type="application/dart" src="main_app.dart"></script>
+</polymer-element>
