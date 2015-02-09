@@ -1,0 +1,38 @@
+<!--
+  Copyright (c) 2014, DartLab. All rights reserved. Use of this source code
+  is governed by a BSD-style license that can be found in the LICENSE file.
+-->
+
+<!-- import polymer-element's definition -->
+<link rel="import" href="../../packages/polymer/polymer.html">
+
+<link rel="import" href="../../packages/paper_elements/paper_spinner.html">
+
+<polymer-element name="dart-preview" vertical layout>
+  <template>
+    <style>
+      iframe {
+        background: white;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      
+      .modal {
+        background: rgba(0,0,0, 0.5);
+      }
+    </style>
+
+    <div relative flex>
+      <iframe _src="{{htmlUri}}" sandbox="allow-scripts" fit>
+      </iframe>
+      <template if="{{ loading > 0 }}">
+        <div class="modal" fit horizontal center-justified layout>
+          <paper-spinner aria-label="loading" active self-center></paper-spinner>
+        </div>
+      </template>
+    </div>
+   
+  </template>
+  <script type="application/dart" src="dart_preview.dart"></script>
+</polymer-element>
