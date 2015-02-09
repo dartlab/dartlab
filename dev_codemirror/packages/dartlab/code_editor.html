@@ -1,0 +1,40 @@
+<!--
+  Copyright (c) 2014, DartLab. All rights reserved. Use of this source code
+  is governed by a BSD-style license that can be found in the LICENSE file.
+-->
+
+<!-- import polymer-element's definition -->
+<link rel="import" href="../../packages/polymer/polymer.html">
+
+<link rel="import" href="../../packages/codemirror_element/codemirror.html">
+
+<link rel="import" href="../../packages/paper_elements/paper_autogrow_textarea.html">
+<link rel="import" href="../../packages/paper_elements/paper_input_decorator.html">
+
+<polymer-element name="code-editor" vertical layout relative>
+  <template>
+    <style>
+      :host > .watermark {
+        position: absolute;
+        top: 0px;
+        right: 10px;
+        font-size: 2em;
+        color: #777;
+        opacity: 0.8;
+        -webkit-transition: all 500ms ease;
+        -moz-transition: all 500ms ease;
+        -ms-transition: all 500ms ease;
+        -o-transition: all 500ms ease;
+        transition: all 500ms ease;
+      }
+      
+      :host(:hover) > .watermark {
+        opacity: 0;
+      }
+    </style>
+
+    <code-mirror value="{{value}}" mode="{{mode}}" theme="monokai" lineNumbers="true" autoCloseTags="{{autoCloseTags}}" flex></code-mirror>
+    <span class="watermark">{{label}}</span>
+  </template>
+  <script type="application/dart" src="code_editor.dart"></script>
+</polymer-element>
