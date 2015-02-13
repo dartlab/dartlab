@@ -1,4 +1,4 @@
-// Copyright (c) 2014, DartLab. All rights reserved. Use of this source code
+// Copyright (c) 2015, DartLab.org. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
 import 'package:polymer/polymer.dart';
@@ -20,9 +20,7 @@ class MainApp extends PolymerElement {
   @observable Metadata metadata;
 
   @observable String body;
-
   @observable String dart;
-
   @observable String css;
 
   @observable bool isFullscreen = false;
@@ -38,6 +36,8 @@ class MainApp extends PolymerElement {
         ..addRoute(name: 'id', path: ':id', enter: (RouteEvent e) => load(id = e.parameters['id']));
     router.listen();
   }
+
+  ready() => async((_) => resize());
 
   init() => this
       ..id = ''
@@ -112,6 +112,8 @@ class MainApp extends PolymerElement {
     (shadowRoot.querySelector("#$id") as dynamic).open();
     sendButtonClick(id);
   }
+
+  resize() => document.querySelectorAll('html /deep/ code-mirror').forEach((node) => node.refresh());
 }
 
 const emptyChar = '\u200B';
