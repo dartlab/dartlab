@@ -1,5 +1,5 @@
 <!--
-  Copyright (c) 2014, DartLab. All rights reserved. Use of this source code
+  Copyright (c) 2015, DartLab.org. All rights reserved. Use of this source code
   is governed by a BSD-style license that can be found in the LICENSE file.
 -->
 
@@ -80,13 +80,13 @@
     <div horizontal layout relative flex>
       <div flex vertical layout>
         <code-editor label="HTML" mode="htmlmixed" autoCloseTags="true" value="{{body}}"></code-editor>
-        <core-splitter direction="up" minSize="150px" on-track="{{test}}"></core-splitter>
+        <core-splitter on-track="{{resize}}" direction="up" minSize="150px"></core-splitter>
         <code-editor label="DART" mode="dart" value="{{dart}}" flex></code-editor>
       </div>
       <core-splitter direction="left"></core-splitter>
       <div flex vertical layout>
         <code-editor label="CSS" mode="css" value="{{css}}"></code-editor>
-        <core-splitter direction="up" minSize="150px"></core-splitter>
+        <core-splitter on-track="{{resize}}" direction="up" minSize="150px"></core-splitter>
         <dart-preview id="preview" body="{{body}}" css="{{css}}" dart="{{dart}}" fit?="{{isFullscreen}}" flex></dart-preview>
       </div>
     </div>

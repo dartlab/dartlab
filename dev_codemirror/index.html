@@ -6307,13 +6307,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div horizontal="" layout="" relative="" flex="">
       <div flex="" vertical="" layout="">
         <code-editor label="HTML" mode="htmlmixed" autoclosetags="true" value="{{body}}"></code-editor>
-        <core-splitter direction="up" minsize="150px" on-track="{{test}}"></core-splitter>
+        <core-splitter on-track="{{resize}}" direction="up" minsize="150px"></core-splitter>
         <code-editor label="DART" mode="dart" value="{{dart}}" flex=""></code-editor>
       </div>
       <core-splitter direction="left"></core-splitter>
       <div flex="" vertical="" layout="">
         <code-editor label="CSS" mode="css" value="{{css}}"></code-editor>
-        <core-splitter direction="up" minsize="150px"></core-splitter>
+        <core-splitter on-track="{{resize}}" direction="up" minsize="150px"></core-splitter>
         <dart-preview id="preview" body="{{body}}" css="{{css}}" dart="{{dart}}" fit?="{{isFullscreen}}" flex=""></dart-preview>
       </div>
     </div>
