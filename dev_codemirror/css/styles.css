@@ -14,3 +14,29 @@ html a .inverse,
 html /deep/ .inverse /deep/ a {
   color: #e0e0e0;
 }
+
+html core-splitter, 
+html /deep/ core-splitter {
+  background-color: #424b4b;
+  box-shadow: none;
+  color: #fff;
+  fill: #fff;
+}
+
+html core-splitter:hover,
+html /deep/ core-splitter:hover,
+html core-splitter:active, 
+html /deep/ core-splitter:active {
+  background-color: #444;
+}
+
+html core-splitter,
+html /deep/ core-splitter {
+  width: 8px;
+}
+
+html core-splitter.horizontal,
+html /deep/ core-splitter.horizontal {
+  height: 8px;
+}
+

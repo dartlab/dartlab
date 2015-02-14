@@ -16,20 +16,28 @@
     <style>
       :host > .watermark {
         position: absolute;
-        top: 0px;
-        right: 10px;
+        top: 0;
+        right: 0;
+        margin: 20px;
+        line-height: 1em;
         font-size: 2em;
+        font-weight: bold;
+        opacity: 0.9;
         color: #777;
-        opacity: 0.8;
+        background: rgba(39,40,34, 0.7);
+        z-index: 1000;
         -webkit-transition: all 500ms ease;
         -moz-transition: all 500ms ease;
         -ms-transition: all 500ms ease;
         -o-transition: all 500ms ease;
         transition: all 500ms ease;
+        -webkit-border-radius: 5px 5px 5px 5px;
+        border-radius: 5px 5px 5px 5px;
       }
       
       :host(:hover) > .watermark {
         opacity: 0;
+        visibility: hidden;
       }
     </style>
 
