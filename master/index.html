@@ -2314,7 +2314,7 @@ polyfill-next-selector {
         opacity: 0.9;
         color: #777;
         background: rgba(39,40,34, 0.7);
-        z-index: 1000;
+        z-index: 100;
         -webkit-transition: all 500ms ease;
         -moz-transition: all 500ms ease;
         -ms-transition: all 500ms ease;
@@ -6274,6 +6274,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       /* Workaround for https://github.com/dart-lang/paper-elements/issues/57 */
       paper-menu-button {
         font-size: 0px;
+      }
+      
+      dart-preview {
+        z-index: 150;
       }
     </style>
     <core-toolbar>
