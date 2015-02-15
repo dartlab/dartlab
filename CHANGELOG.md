@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+
+* Add CodeMirror editor
+* Unlock horizontal splitters
+
 ## 0.1.2
 
 ### Fullscreen mode & Share links
