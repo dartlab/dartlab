@@ -1,18 +1,48 @@
 <!--
-  Copyright (c) 2014, DartLab. All rights reserved. Use of this source code
+  Copyright (c) 2015, DartLab.org. All rights reserved. Use of this source code
   is governed by a BSD-style license that can be found in the LICENSE file.
 -->
 
 <!-- import polymer-element's definition -->
 <link rel="import" href="../../packages/polymer/polymer.html">
 
+<link rel="import" href="../../packages/codemirror_element/codemirror.html">
+
 <link rel="import" href="../../packages/paper_elements/paper_autogrow_textarea.html">
 <link rel="import" href="../../packages/paper_elements/paper_input_decorator.html">
 
-<polymer-element name="code-editor" attributes="label,value" noscript vertical layout>
+<polymer-element name="code-editor" vertical layout relative>
   <template>
-    <paper-input-decorator label="{{label}}" floatinglabel relative flex>
-      <textarea value="{{value}}" placeholder aria-label="{{label}}" fit></textarea>
-    </paper-input-decorator>
+    <style>
+      :host > .watermark {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 20px;
+        line-height: 1em;
+        font-size: 2em;
+        font-weight: bold;
+        opacity: 0.9;
+        color: #777;
+        background: rgba(39,40,34, 0.7);
+        z-index: 1000;
+        -webkit-transition: all 500ms ease;
+        -moz-transition: all 500ms ease;
+        -ms-transition: all 500ms ease;
+        -o-transition: all 500ms ease;
+        transition: all 500ms ease;
+        -webkit-border-radius: 5px 5px 5px 5px;
+        border-radius: 5px 5px 5px 5px;
+      }
+      
+      :host(:hover) > .watermark {
+        opacity: 0;
+        visibility: hidden;
+      }
+    </style>
+
+    <code-mirror value="{{value}}" mode="{{mode}}" theme="monokai" lineNumbers="true" autoCloseTags="{{autoCloseTags}}" flex></code-mirror>
+    <span class="watermark">{{label}}</span>
   </template>
+  <script type="application/dart" src="code_editor.dart"></script>
 </polymer-element>

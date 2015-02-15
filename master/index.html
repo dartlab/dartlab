@@ -342,6 +342,65 @@ html /deep/ [segment], html /deep/ segment {
 -->
 
 
+
+
+<polymer-element name="code-mirror" vertical="" layout="" relative="">
+  <template>
+    <style>/* Copyright (c) 2015, DartLab.org. All rights reserved. Use of this source code */
+/* is governed by a BSD-style license that can be found in the LICENSE file. */
+
+@import 'packages/codemirror/css/codemirror.css';
+
+@import 'packages/codemirror/theme/3024-day.css';
+@import 'packages/codemirror/theme/3024-night.css';
+@import 'packages/codemirror/theme/ambiance-mobile.css';
+@import 'packages/codemirror/theme/ambiance.css';
+@import 'packages/codemirror/theme/base16-dark.css';
+@import 'packages/codemirror/theme/base16-light.css';
+@import 'packages/codemirror/theme/blackboard.css';
+@import 'packages/codemirror/theme/cobalt.css';
+@import 'packages/codemirror/theme/eclipse.css';
+@import 'packages/codemirror/theme/elegant.css';
+@import 'packages/codemirror/theme/erlang-dark.css';
+@import 'packages/codemirror/theme/lesser-dark.css';
+@import 'packages/codemirror/theme/mbo.css';
+@import 'packages/codemirror/theme/mdn-like.css';
+@import 'packages/codemirror/theme/midnight.css';
+@import 'packages/codemirror/theme/monokai.css';
+@import 'packages/codemirror/theme/neat.css';
+@import 'packages/codemirror/theme/neo.css';
+@import 'packages/codemirror/theme/night.css';
+@import 'packages/codemirror/theme/paraiso-dark.css';
+@import 'packages/codemirror/theme/paraiso-light.css';
+@import 'packages/codemirror/theme/pastel-on-dark.css';
+@import 'packages/codemirror/theme/rubyblue.css';
+@import 'packages/codemirror/theme/solarized.css';
+@import 'packages/codemirror/theme/the-matrix.css';
+@import 'packages/codemirror/theme/tomorrow-night-bright.css';
+@import 'packages/codemirror/theme/tomorrow-night-eighties.css';
+@import 'packages/codemirror/theme/twilight.css';
+@import 'packages/codemirror/theme/vibrant-ink.css';
+@import 'packages/codemirror/theme/xq-dark.css';
+@import 'packages/codemirror/theme/xq-light.css';
+@import 'packages/codemirror/theme/zenburn.css';
+</style>
+    <style>
+      .CodeMirror {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <textarea></textarea>
+  </template>
+  <script src="packages/codemirror/codemirror.js"></script>
+  
+</polymer-element>
+
+
 <script src="packages/web_components/interop_support.js"></script>
 
 <!-- Dart note: load polymer for Dart and JS from the same place -->
@@ -362,6 +421,11 @@ html /deep/ [segment], html /deep/ segment {
       width: 400px;
     }
 
+    .mirror-text {
+      visibility: hidden;
+      word-wrap: break-word;
+    }
+
     ::content textarea {
       padding: 0;
       margin: 0;
@@ -379,7 +443,7 @@ html /deep/ [segment], html /deep/ segment {
   </style>
 
   <!-- the mirror sizes the input/textarea so it grows with typing -->
-  <div id="mirror" class="mirror-text" invisible="" aria-hidden="true">&nbsp;</div>
+  <div id="mirror" class="mirror-text" aria-hidden="true">&nbsp;</div>
 
   <!-- size the input/textarea with a div, because the textarea has intrinsic size in ff -->
   <div class="textarea-container" fit="">
@@ -473,6 +537,7 @@ html /deep/ [segment], html /deep/ segment {
 
 </script>
 </polymer-element>
+
 
 
 
@@ -2235,12 +2300,40 @@ polyfill-next-selector {
 
 
 
-<polymer-element name="code-editor" attributes="label,value" noscript="" vertical="" layout="">
+<polymer-element name="code-editor" vertical="" layout="" relative="">
   <template>
-    <paper-input-decorator label="{{label}}" floatinglabel="" relative="" flex="">
-      <textarea value="{{value}}" placeholder="" aria-label="{{label}}" fit=""></textarea>
-    </paper-input-decorator>
+    <style>
+      :host > .watermark {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 20px;
+        line-height: 1em;
+        font-size: 2em;
+        font-weight: bold;
+        opacity: 0.9;
+        color: #777;
+        background: rgba(39,40,34, 0.7);
+        z-index: 1000;
+        -webkit-transition: all 500ms ease;
+        -moz-transition: all 500ms ease;
+        -ms-transition: all 500ms ease;
+        -o-transition: all 500ms ease;
+        transition: all 500ms ease;
+        -webkit-border-radius: 5px 5px 5px 5px;
+        border-radius: 5px 5px 5px 5px;
+      }
+      
+      :host(:hover) > .watermark {
+        opacity: 0;
+        visibility: hidden;
+      }
+    </style>
+
+    <code-mirror value="{{value}}" mode="{{mode}}" theme="monokai" linenumbers="true" autoclosetags="{{autoCloseTags}}" flex=""></code-mirror>
+    <span class="watermark">{{label}}</span>
   </template>
+  
 </polymer-element>
 
 
@@ -6182,23 +6275,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       paper-menu-button {
         font-size: 0px;
       }
-
-      core-splitter {
-        background-color: #424b4b;
-        box-shadow: none;
-        color: #fff;
-        fill: #fff;
-      }
-
-      core-splitter:hover,
-      core-splitter:active {
-        background-color: #444;
-      }
     </style>
     <core-toolbar>
       <a href="http://dartlab.org" class="logo">&nbsp;</a>
       <paper-input value="{{description}}" label="Describe your experience..." flex=""></paper-input>
-      <paper-icon-button icon="aspect-ratio" on-tap="{{fullscreen}}" title="Fullscreen" active?="{{isFullscreen}}"></paper-icon-button>
+      <paper-icon-button icon="aspect-ratio" on-tap="{{fullscreen}}" title="Fullscreen" toggle="" active?="{{isFullscreen}}"></paper-icon-button>
       <paper-icon-button icon="save" on-tap="{{save}}" title="Save"></paper-icon-button>
       <paper-menu-button>
         <paper-icon-button icon="reply" title="Share"></paper-icon-button>
@@ -6221,14 +6302,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </core-toolbar>
     <div horizontal="" layout="" relative="" flex="">
       <div flex="" vertical="" layout="">
-        <code-editor label="HTML" value="{{body}}"></code-editor>
-        <core-splitter direction="up" minsize="150px"></core-splitter>
-        <code-editor label="Dart" value="{{dart}}" flex=""></code-editor>
+        <code-editor label="HTML" mode="htmlmixed" autoclosetags="true" value="{{body}}"></code-editor>
+        <core-splitter on-track="{{resize}}" direction="up" minsize="150px"></core-splitter>
+        <code-editor label="DART" mode="dart" value="{{dart}}" flex=""></code-editor>
       </div>
       <core-splitter direction="left"></core-splitter>
       <div flex="" vertical="" layout="">
-        <code-editor label="CSS" value="{{css}}"></code-editor>
-        <core-splitter direction="up" minsize="150px"></core-splitter>
+        <code-editor label="CSS" mode="css" value="{{css}}"></code-editor>
+        <core-splitter on-track="{{resize}}" direction="up" minsize="150px"></core-splitter>
         <dart-preview id="preview" body="{{body}}" css="{{css}}" dart="{{dart}}" fit?="{{isFullscreen}}" flex=""></dart-preview>
       </div>
     </div>
@@ -6885,6 +6966,32 @@ html a .inverse,
 html /deep/ .inverse /deep/ a {
   color: #e0e0e0;
 }
+
+html core-splitter, 
+html /deep/ core-splitter {
+  background-color: #424b4b;
+  box-shadow: none;
+  color: #fff;
+  fill: #fff;
+}
+
+html core-splitter:hover,
+html /deep/ core-splitter:hover,
+html core-splitter:active, 
+html /deep/ core-splitter:active {
+  background-color: #444;
+}
+
+html core-splitter,
+html /deep/ core-splitter {
+  width: 8px;
+}
+
+html core-splitter.horizontal,
+html /deep/ core-splitter.horizontal {
+  height: 8px;
+}
+
 </style></div>
   <main-app flex=""></main-app>
 
