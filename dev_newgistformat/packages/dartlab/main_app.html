@@ -1,5 +1,5 @@
 <!--
-  Copyright (c) 2014, DartLab. All rights reserved. Use of this source code
+  Copyright (c) 2015, DartLab.org. All rights reserved. Use of this source code
   is governed by a BSD-style license that can be found in the LICENSE file.
 -->
 
@@ -40,11 +40,15 @@
       paper-menu-button {
         font-size: 0px;
       }
+      
+      dart-preview {
+        z-index: 150;
+      }
     </style>
     <core-toolbar>
       <a href="http://dartlab.org" class="logo">&nbsp;</a>
       <paper-input value="{{workbench.description}}" label="Describe your experience..." flex></paper-input>
-      <paper-icon-button icon="aspect-ratio" on-tap="{{fullscreen}}" title="Fullscreen" active?="{{isFullscreen}}"></paper-icon-button>
+      <paper-icon-button icon="aspect-ratio" on-tap="{{fullscreen}}" title="Fullscreen" toggle active?="{{isFullscreen}}"></paper-icon-button>
       <paper-icon-button icon="save" on-tap="{{save}}" title="Save"></paper-icon-button>
       <paper-menu-button>
         <paper-icon-button icon="reply" title="Share"></paper-icon-button>
@@ -67,14 +71,14 @@
     </core-toolbar>
     <div horizontal layout relative flex>
       <div flex vertical layout>
-        <code-editor label="HTML" value="{{workbench.body}}" flex></code-editor>
-        <core-splitter direction="up"></core-splitter>
-        <code-editor label="Dart" value="{{workbench.dart}}" flex></code-editor>
+        <code-editor label="HTML" mode="htmlmixed" autoCloseTags="true" value="{{workbench.body}}"></code-editor>
+        <core-splitter on-track="{{resize}}" direction="up" minSize="150px"></core-splitter>
+        <code-editor label="DART" mode="dart" value="{{workbench.dart}}" flex></code-editor>
       </div>
       <core-splitter direction="left"></core-splitter>
       <div flex vertical layout>
-        <code-editor label="CSS" value="{{workbench.css}}" flex></code-editor>
-        <core-splitter direction="up"></core-splitter>
+        <code-editor label="CSS" mode="css" value="{{workbench.css}}"></code-editor>
+        <core-splitter on-track="{{resize}}" direction="up" minSize="150px"></core-splitter>
         <dart-preview id="preview" body="{{workbench.body}}" css="{{workbench.css}}" dart="{{workbench.dart}}" fit?="{{isFullscreen}}" flex></dart-preview>
       </div>
     </div>
