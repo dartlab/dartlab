@@ -7,7 +7,7 @@ import 'package:unittest/unittest.dart';
 
 import 'package:observe/observe.dart';
 
-part '../../lib/src/model.dart';
+part 'package:dartlab/src/model.dart';
 
 main() {
   group('Workbench', () {

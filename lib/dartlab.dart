@@ -6,7 +6,6 @@ library dartlab;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:html';
-import 'package:html5lib/parser.dart' as html5lib;
 import 'package:observe/observe.dart';
 
 part 'src/gist_client.dart';

@@ -3,10 +3,8 @@
 
 library dartlab.all_test;
 
-import 'src/gist_client_test.dart' as gist_client_test;
 import 'src/model_test.dart' as model_test;
 
 void main() {
-  gist_client_test.main();
   model_test.main();
 }

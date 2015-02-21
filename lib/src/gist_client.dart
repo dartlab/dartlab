@@ -54,9 +54,7 @@ class GistClient {
     return workbench;
   }
 
-  String _htmlDecode(String html) {
-    return html5lib.parse(html).querySelector("body").innerHtml.trim();
-  }
+  String _htmlDecode(String html) => (new HtmlHtmlElement()..setInnerHtml(html)).innerHtml.trim();
 
   String _gistFileDecode(Map<String, Map> files, String filename, {String defaultValue: ''}) => files[filename] == null ? defaultValue : files[filename]['content'];
 }

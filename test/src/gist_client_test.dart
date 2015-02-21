@@ -7,11 +7,11 @@ import 'package:unittest/unittest.dart';
 
 import 'dart:async';
 import 'dart:convert';
-import 'package:html5lib/parser.dart' as html5lib;
+import 'dart:html' show HtmlHtmlElement;
 import 'package:observe/observe.dart';
 
-part '../../lib/src/gist_client.dart';
-part '../../lib/src/model.dart';
+part 'package:dartlab/src/gist_client.dart';
+part 'package:dartlab/src/model.dart';
 
 main() {
   group('Gist client', () {
@@ -202,6 +202,28 @@ main() {
         expect(w.body, isEmpty);
         expect(w.css, isEmpty);
         expect(w.dart, isEmpty);
+      });
+    });
+    
+    group('_htmlDecode', () {
+      test('should return empty string if html is empty', () {
+        expect(client._htmlDecode(''), isEmpty);
+      });
+  
+      test('should return body content if html is well-formed', () {
+        expect(client._htmlDecode('<html><body><h1>Hello World!</h1></body></html>'), equals('<h1>Hello World!</h1>'));
+        expect(client._htmlDecode('<html>\n<body><h1>Hello World!</h1></body>\n</html>'), equals('<h1>Hello World!</h1>'));
+      });
+  
+      test('should return empty string if html is well-formed but without body', () {
+        expect(client._htmlDecode('<html><head><title>Hello World!</title></head></html>'), isEmpty);
+      });
+  
+      test('should return body content even if html is malformed', () {
+        expect(client._htmlDecode('Hello World!'), equals('Hello World!'));
+        expect(client._htmlDecode('<h1>Hello World!</h1>'), equals('<h1>Hello World!</h1>'));
+        expect(client._htmlDecode('<body><h1>Hello World!</h1>'), '<h1>Hello World!</h1>');
+        expect(client._htmlDecode('<body><h1>Hello World!</h1></XXX>'), '<h1>Hello World!</h1>');
       });
     });
   });
