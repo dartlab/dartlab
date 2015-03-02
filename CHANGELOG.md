@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+
+* New Gist format (See [Wiki](https://github.com/dartlab/dartlab/wiki/Gist-persistence))
+
 ## 0.2.0
 
 * Add CodeMirror editor
