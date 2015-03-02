@@ -17,6 +17,7 @@ dependencies:
   usage: ">=0.0.5 <0.1.0"
 dev_dependencies:
   http: any
+  unittest: any
 #dependency_overrides:
 #  quiver: '>=0.20.0 <0.21.0'
 transformers:

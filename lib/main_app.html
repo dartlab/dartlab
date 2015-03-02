@@ -47,7 +47,7 @@
     </style>
     <core-toolbar>
       <a href="http://dartlab.org" class="logo">&nbsp;</a>
-      <paper-input value="{{description}}" label="Describe your experience..." flex></paper-input>
+      <paper-input value="{{workbench.description}}" label="Describe your experience..." flex></paper-input>
       <paper-icon-button icon="aspect-ratio" on-tap="{{fullscreen}}" title="Fullscreen" toggle active?="{{isFullscreen}}"></paper-icon-button>
       <paper-icon-button icon="save" on-tap="{{save}}" title="Save"></paper-icon-button>
       <paper-menu-button>
@@ -71,15 +71,15 @@
     </core-toolbar>
     <div horizontal layout relative flex>
       <div flex vertical layout>
-        <code-editor label="HTML" mode="htmlmixed" autoCloseTags="true" value="{{body}}"></code-editor>
+        <code-editor label="HTML" mode="htmlmixed" autoCloseTags="true" value="{{workbench.body}}"></code-editor>
         <core-splitter on-track="{{resize}}" direction="up" minSize="150px"></core-splitter>
-        <code-editor label="DART" mode="dart" value="{{dart}}" flex></code-editor>
+        <code-editor label="DART" mode="dart" value="{{workbench.dart}}" flex></code-editor>
       </div>
       <core-splitter direction="left"></core-splitter>
       <div flex vertical layout>
-        <code-editor label="CSS" mode="css" value="{{css}}"></code-editor>
+        <code-editor label="CSS" mode="css" value="{{workbench.css}}"></code-editor>
         <core-splitter on-track="{{resize}}" direction="up" minSize="150px"></core-splitter>
-        <dart-preview id="preview" body="{{body}}" css="{{css}}" dart="{{dart}}" fit?="{{isFullscreen}}" flex></dart-preview>
+        <dart-preview id="preview" body="{{workbench.body}}" css="{{workbench.css}}" dart="{{workbench.dart}}" fit?="{{isFullscreen}}" flex></dart-preview>
       </div>
     </div>
     <paper-dialog id="about" class="inverse" backdrop>

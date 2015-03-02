@@ -18,4 +18,4 @@ packages
 ### DartEditor ###
 .project
 .buildlog
-.settings/
+.settings
