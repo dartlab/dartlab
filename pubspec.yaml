@@ -1,6 +1,8 @@
 name: dartlab
 version: 0.3.0
 description: Test and share your Dart script with DartLab.
+homepage: https://github.com/dartlab/dartlab
+author: Guillaume Girou <guillaume@dartlab.org>
 environment:
   sdk: '>=1.0.0 <2.0.0'
 dependencies:
