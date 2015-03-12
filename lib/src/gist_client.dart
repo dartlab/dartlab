@@ -9,7 +9,7 @@ class GistClient {
   Future<Workbench> load(String id) {
     return HttpRequest.getString("$apiUrl/$id") //
     .then(JSON.decode) //
-    .then(_gistDecode).catchError((_) => id = '');
+    .then(_gistDecode);
   }
 
   Future<Workbench> save(Workbench workbench) {
@@ -48,13 +48,16 @@ class GistClient {
     Workbench workbench = new Workbench()
         ..id = data['id']
         ..description = data['description']
-        ..body = files["index.html"] != null ? _htmlDecode(_gistFileDecode(files, "index.html")) :  _gistFileDecode(files, "body.html")
+        ..body = files["index.html"] != null ? _htmlDecode(_gistFileDecode(files, "index.html")) : _gistFileDecode(files, "body.html")
         ..css = _gistFileDecode(files, "style.css")
         ..dart = _gistFileDecode(files, "main.dart");
     return workbench;
   }
 
-  String _htmlDecode(String html) => (new HtmlHtmlElement()..setInnerHtml(html)).innerHtml.trim();
+  String _htmlDecode(String html) {
+    var fullHtml = html.contains('<html>') ? html : '<body>$html</body>';
+    return new DomParser().parseFromString(fullHtml, "text/html").querySelector("body").innerHtml.trim();
+  }
 
   String _gistFileDecode(Map<String, Map> files, String filename, {String defaultValue: ''}) => files[filename] == null ? defaultValue : files[filename]['content'];
 }
