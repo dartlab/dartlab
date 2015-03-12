@@ -1,0 +1,42 @@
+/* Copyright (c) 2014, DartLab. All rights reserved. Use of this source code */
+/* is governed by a BSD-style license that can be found in the LICENSE file. */
+
+body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-touch-callout: none;
+}
+
+html a .inverse,
+html /deep/ .inverse /deep/ a {
+  color: #e0e0e0;
+}
+
+html core-splitter, 
+html /deep/ core-splitter {
+  background-color: #424b4b;
+  box-shadow: none;
+  color: #fff;
+  fill: #fff;
+}
+
+html core-splitter:hover,
+html /deep/ core-splitter:hover,
+html core-splitter:active, 
+html /deep/ core-splitter:active {
+  background-color: #444;
+}
+
+html core-splitter,
+html /deep/ core-splitter {
+  width: 8px;
+}
+
+html core-splitter.horizontal,
+html /deep/ core-splitter.horizontal {
+  height: 8px;
+}
+

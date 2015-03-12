@@ -1,0 +1,37 @@
+/* Copyright (c) 2015, DartLab.org. All rights reserved. Use of this source code */
+/* is governed by a BSD-style license that can be found in the LICENSE file. */
+
+@import 'packages/codemirror/css/codemirror.css';
+
+@import 'packages/codemirror/theme/3024-day.css';
+@import 'packages/codemirror/theme/3024-night.css';
+@import 'packages/codemirror/theme/ambiance-mobile.css';
+@import 'packages/codemirror/theme/ambiance.css';
+@import 'packages/codemirror/theme/base16-dark.css';
+@import 'packages/codemirror/theme/base16-light.css';
+@import 'packages/codemirror/theme/blackboard.css';
+@import 'packages/codemirror/theme/cobalt.css';
+@import 'packages/codemirror/theme/eclipse.css';
+@import 'packages/codemirror/theme/elegant.css';
+@import 'packages/codemirror/theme/erlang-dark.css';
+@import 'packages/codemirror/theme/lesser-dark.css';
+@import 'packages/codemirror/theme/mbo.css';
+@import 'packages/codemirror/theme/mdn-like.css';
+@import 'packages/codemirror/theme/midnight.css';
+@import 'packages/codemirror/theme/monokai.css';
+@import 'packages/codemirror/theme/neat.css';
+@import 'packages/codemirror/theme/neo.css';
+@import 'packages/codemirror/theme/night.css';
+@import 'packages/codemirror/theme/paraiso-dark.css';
+@import 'packages/codemirror/theme/paraiso-light.css';
+@import 'packages/codemirror/theme/pastel-on-dark.css';
+@import 'packages/codemirror/theme/rubyblue.css';
+@import 'packages/codemirror/theme/solarized.css';
+@import 'packages/codemirror/theme/the-matrix.css';
+@import 'packages/codemirror/theme/tomorrow-night-bright.css';
+@import 'packages/codemirror/theme/tomorrow-night-eighties.css';
+@import 'packages/codemirror/theme/twilight.css';
+@import 'packages/codemirror/theme/vibrant-ink.css';
+@import 'packages/codemirror/theme/xq-dark.css';
+@import 'packages/codemirror/theme/xq-light.css';
+@import 'packages/codemirror/theme/zenburn.css';
