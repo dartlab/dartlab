@@ -53,11 +53,21 @@ class GistClient {
         ..dart = _gistFileDecode(files, "main.dart");
     return workbench;
   }
-
+  
   String _htmlDecode(String html) {
-    var fullHtml = html.contains('<html>') ? html : '<body>$html</body>';
-    return new DomParser().parseFromString(fullHtml, "text/html").querySelector("body").innerHtml.trim();
+    if(!html.contains('<html')) {
+      return html;
+    } else {
+      var match = _bodyRegExp.firstMatch(html);
+      return match == null ? '' : match.group(1).trim();
+    }
   }
 
   String _gistFileDecode(Map<String, Map> files, String filename, {String defaultValue: ''}) => files[filename] == null ? defaultValue : files[filename]['content'];
 }
+
+final RegExp _bodyRegExp = () {
+  var body = r'body(?:\s[^>]*)?'; // Body tag with its attributes
+  var any = r'[\s\S]'; // Any character including new line
+  return new RegExp("<$body>($any*)</$body>(?:(?!</$body>)$any)*", multiLine: true, caseSensitive: false);
+}();

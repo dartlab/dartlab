@@ -221,8 +221,9 @@ main() {
       test('should return body content even if html is malformed', () {
         expect(client._htmlDecode('Hello World!'), equals('Hello World!'));
         expect(client._htmlDecode('<h1>Hello World!</h1>'), equals('<h1>Hello World!</h1>'));
-        expect(client._htmlDecode('<body><h1>Hello World!</h1>'), '<h1>Hello World!</h1>');
-        expect(client._htmlDecode('<body><h1>Hello World!</h1></XXX>'), '<h1>Hello World!</h1>');
+        expect(client._htmlDecode('<html><body><h1>Hello World!</h1></XXX></body></html>'), '<h1>Hello World!</h1></XXX>');
+        //expect(client._htmlDecode('<html><body><h1>Hello World!</h1>'), '<h1>Hello World!</h1>');
+        //expect(client._htmlDecode('<html><body><h1>Hello World!</h1></html>'), '<h1>Hello World!</h1>');
       });
 
       test('should return body content with external scripts or resources', () {
@@ -239,6 +240,10 @@ main() {
         expect(client._htmlDecode('<h1 custom-attribute="Bob">Hello World!</h1>'), equals('<h1 custom-attribute="Bob">Hello World!</h1>'));
       });
 
+      test('should avoid hacky body tags', () {
+        expect(client._htmlDecode('<html><body><h1>Hello <!-- </body> --> World!</h1></body></html>'), equals('<h1>Hello <!-- </body> --> World!</h1>'));
+      });
+
       test('should preserve formatting', () {
         expect(client._htmlDecode(r'''<html>
 <body>
@@ -252,14 +257,15 @@ main() {
     required >
 </h1 >
 </body>
-</html>'''), equals(r'''<h1 class="awesome">
+</html>'''), equals(r'''<h1  class="awesome" >
   Hello World!
 
   <!-- Some comments
        <custom-comments> -->
 
-  <input type="text" required="">
-</h1>'''));
+  <input type='text'
+    required >
+</h1 >'''));
       });
     });
   });
