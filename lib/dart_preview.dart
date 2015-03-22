@@ -79,9 +79,10 @@ abstract class JavaScriptPreviewTemplate extends PreviewTemplate {
 
 class ServerJavaScriptPreviewTemplate extends JavaScriptPreviewTemplate {
   Future<String> toDartUrl(String dart) => //
-    HttpRequest.request("https://liftoff-dev.appspot.com/api/compile", method: 'POST', sendData: dart) //
+    HttpRequest.request("https://dart-services.appspot.com/api/dartservices/v1/compile", method: 'POST', sendData: JSON.encode({"source": dart})) //
     .then((HttpRequest r) => r.responseText) //
-    .then((javascript) => _toBase64('application/javascript', javascript));
+    .then(JSON.decode) //
+    .then((Map response) => _toBase64('application/javascript', response["result"]));
 }
 
 class ClientJavaScriptPreviewTemplate extends JavaScriptPreviewTemplate {
