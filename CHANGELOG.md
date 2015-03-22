@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+
+* Upgrade to Codemirror 5.0.0
+* Fix body content extraction
+
 ## 0.3.0
 
 * New Gist format (See [Wiki](https://github.com/dartlab/dartlab/wiki/Gist-persistence))
