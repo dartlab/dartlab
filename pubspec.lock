@@ -24,15 +24,15 @@ packages:
   code_transformers:
     description: code_transformers
     source: hosted
-    version: "0.2.5"
+    version: "0.2.7+1"
   codemirror:
     description: codemirror
     source: hosted
-    version: "0.1.6+4.12.0"
+    version: "0.2.1+5.0.0"
   codemirror_element:
     description: codemirror_element
     source: hosted
-    version: "0.0.4+4.12.0"
+    version: "0.1.0+5.0.0"
   collection:
     description: collection
     source: hosted
@@ -53,10 +53,14 @@ packages:
     description: custom_element_apigen
     source: hosted
     version: "0.1.3"
+  html:
+    description: html
+    source: hosted
+    version: "0.12.1"
   html5lib:
     description: html5lib
     source: hosted
-    version: "0.12.0"
+    version: "0.12.1"
   http:
     description: http
     source: hosted
@@ -80,11 +84,11 @@ packages:
   matcher:
     description: matcher
     source: hosted
-    version: "0.11.4+1"
+    version: "0.11.4+3"
   observe:
     description: observe
     source: hosted
-    version: "0.13.0"
+    version: "0.13.0+1"
   paper_elements:
     description: paper_elements
     source: hosted
@@ -108,7 +112,7 @@ packages:
   quiver:
     description: quiver
     source: hosted
-    version: "0.21.1"
+    version: "0.21.3"
   route_hierarchical:
     description: route_hierarchical
     source: hosted
@@ -128,7 +132,7 @@ packages:
   stack_trace:
     description: stack_trace
     source: hosted
-    version: "1.2.1"
+    version: "1.2.4"
   string_scanner:
     description: string_scanner
     source: hosted
@@ -136,7 +140,7 @@ packages:
   template_binding:
     description: template_binding
     source: hosted
-    version: "0.14.0+1"
+    version: "0.14.0+2"
   unittest:
     description: unittest
     source: hosted
@@ -152,7 +156,7 @@ packages:
   watcher:
     description: watcher
     source: hosted
-    version: "0.9.4"
+    version: "0.9.5"
   web_components:
     description: web_components
     source: hosted

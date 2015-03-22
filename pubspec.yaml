@@ -8,7 +8,7 @@ environment:
 dependencies:
 #  analyzer: '>=0.22.4 <0.23.0'
   browser: any
-  codemirror_element: '>=0.0.4+4.12.0 <0.1.0'
+  codemirror_element: '>=0.1.0 <0.2.0'
   core_elements: '>=0.6.0 <0.7.0'
   crypto: any
 #  github: '>=2.1.4 <3.0.0'
