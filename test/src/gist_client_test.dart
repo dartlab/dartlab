@@ -7,7 +7,7 @@ import 'package:unittest/unittest.dart';
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:html' show HtmlHtmlElement;
+import 'dart:html' show DomParser;
 import 'package:observe/observe.dart';
 
 part 'package:dartlab/src/gist_client.dart';
@@ -204,26 +204,68 @@ main() {
         expect(w.dart, isEmpty);
       });
     });
-    
+
     group('_htmlDecode', () {
       test('should return empty string if html is empty', () {
         expect(client._htmlDecode(''), isEmpty);
       });
-  
+
       test('should return body content if html is well-formed', () {
         expect(client._htmlDecode('<html><body><h1>Hello World!</h1></body></html>'), equals('<h1>Hello World!</h1>'));
-        expect(client._htmlDecode('<html>\n<body><h1>Hello World!</h1></body>\n</html>'), equals('<h1>Hello World!</h1>'));
       });
-  
+
       test('should return empty string if html is well-formed but without body', () {
         expect(client._htmlDecode('<html><head><title>Hello World!</title></head></html>'), isEmpty);
       });
-  
+
       test('should return body content even if html is malformed', () {
         expect(client._htmlDecode('Hello World!'), equals('Hello World!'));
         expect(client._htmlDecode('<h1>Hello World!</h1>'), equals('<h1>Hello World!</h1>'));
-        expect(client._htmlDecode('<body><h1>Hello World!</h1>'), '<h1>Hello World!</h1>');
-        expect(client._htmlDecode('<body><h1>Hello World!</h1></XXX>'), '<h1>Hello World!</h1>');
+        expect(client._htmlDecode('<html><body><h1>Hello World!</h1></XXX></body></html>'), '<h1>Hello World!</h1></XXX>');
+        //expect(client._htmlDecode('<html><body><h1>Hello World!</h1>'), '<h1>Hello World!</h1>');
+        //expect(client._htmlDecode('<html><body><h1>Hello World!</h1></html>'), '<h1>Hello World!</h1>');
+      });
+
+      test('should return body content with external scripts or resources', () {
+        var js = 'https://cdn.com/bootstrap.js';
+        var css = 'https://cdn.com/bootstrap.css';
+        expect(client._htmlDecode('<link rel="stylesheet" href="$css">'), equals('<link rel="stylesheet" href="$css">'));
+        expect(client._htmlDecode('<script src="$js"></script>'), equals('<script src="$js"></script>'));
+        expect(client._htmlDecode('<html><body><script src="$js"></script></body></html>'), equals('<script src="$js"></script>'));
+        expect(client._htmlDecode('<script src="$js"></script><h1>Mixed script and content</h1>'), equals('<script src="$js"></script><h1>Mixed script and content</h1>'));
+      });
+
+      test('should return body content with custom elements or attributes', () {
+        expect(client._htmlDecode('<custom-element>Hello World!</custom-element>'), equals('<custom-element>Hello World!</custom-element>'));
+        expect(client._htmlDecode('<h1 custom-attribute="Bob">Hello World!</h1>'), equals('<h1 custom-attribute="Bob">Hello World!</h1>'));
+      });
+
+      test('should avoid hacky body tags', () {
+        expect(client._htmlDecode('<html><body><h1>Hello <!-- </body> --> World!</h1></body></html>'), equals('<h1>Hello <!-- </body> --> World!</h1>'));
+      });
+
+      test('should preserve formatting', () {
+        expect(client._htmlDecode(r'''<html>
+<body>
+<h1  class="awesome" >
+  Hello World!
+
+  <!-- Some comments
+       <custom-comments> -->
+
+  <input type='text'
+    required >
+</h1 >
+</body>
+</html>'''), equals(r'''<h1  class="awesome" >
+  Hello World!
+
+  <!-- Some comments
+       <custom-comments> -->
+
+  <input type='text'
+    required >
+</h1 >'''));
       });
     });
   });
