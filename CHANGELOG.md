@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0
+
+* Upgrade to Polymer 0.16
+* Upgrade to Codemirror 5.1.0
+
 ## 0.4.0
 
 * Upgrade to Codemirror 5.0.0
