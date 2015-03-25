@@ -1,9 +1,7 @@
 <!DOCTYPE html><!--
   Copyright (c) 2014, DartLab. All rights reserved. Use of this source code
   is governed by a BSD-style license that can be found in the LICENSE file.
---><html><head itemscope="" itemtype="http://schema.org/SoftwareApplication"><script src="packages/web_components/webcomponents.min.js"></script>
-<script src="packages/web_components/dart_support.js"></script>
-
+--><html><head itemscope="" itemtype="http://schema.org/SoftwareApplication"><script src="packages/web_components/webcomponents.min.js"></script><script src="packages/web_components/dart_support.js"></script>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -531,6 +529,10 @@ html /deep/ [segment], html /deep/ segment {
 
 </script>
 </polymer-element>
+
+
+
+
 
 
 
@@ -1359,6 +1361,7 @@ html /deep/ core-icon {
 
 
 
+
 <script>
 // This empty script is here to workaround issue
 // https://github.com/dart-lang/core-elements/issues/11
@@ -1808,18 +1811,13 @@ Polymer('core-style', {
   background-color: {{g.paperInput.focusedColor}};
 }
 
-.cursor {
-  background-color: {{g.paperInput.cursorColor}};
-}
-
 :host(.invalid) .floated-label .label-text,
 .error {
   color: {{g.paperInput.invalidColor}};
 }
 
 :host(.invalid) .unfocused-underline,
-:host(.invalid) .focused-underline,
-:host(.invalid) .cursor {
+:host(.invalid) .focused-underline {
   background-color: {{g.paperInput.invalidColor}};
 }
 
@@ -1847,7 +1845,7 @@ Polymer('core-style', {
 }
 
 polyfill-next-selector {
-  content: '.input-body > :not(.label):not(.cursor)';
+  content: '.input-body > :not(.label)';
 }
 ::content > *,
 ::content > input[is="core-input"] {
@@ -1928,26 +1926,6 @@ polyfill-next-selector {
   transform-origin: 0% 0%;
 }
 
-.cursor {
-  position: absolute;
-  top: 0.4em;
-  left: 0;
-  width: 1px;
-  height: 1.4em;
-  opacity: 0.4;
-  -moz-transform-origin: 0%;
-  -webkit-transform-origin: 0%;
-  transform-origin: 0%;
-  -webkit-transform: none;
-  transform: none;
-}
-
-.cursor[invisible] {
-  opacity: 0.75;
-  -webkit-transform: translate3d(3em,0,0) scale3d(50,1,1);
-  transform: translate3d(3em,0,0) scale3d(50,1,1);
-}
-
 .underline {
   height: 0px;
   overflow: visible;
@@ -1996,8 +1974,6 @@ polyfill-next-selector {
         <span id="labelText" class="label-text" invisible?="{{!_labelVisible}}" animated?="{{labelAnimated}}">{{label}}</span>
       </div>
 
-      <div class="cursor" invisible?="{{!cursorAnimated}}" animated?="{{cursorAnimated}}"></div>
-
       <content></content>
 
     </div>
@@ -2021,7 +1997,6 @@ polyfill-next-selector {
     var paperInput = CoreStyle.g.paperInput = CoreStyle.g.paperInput || {};
 
     paperInput.labelColor = '#757575';
-    paperInput.cursorColor = '#4059a9';
     paperInput.focusedColor = '#4059a9';
     paperInput.invalidColor = '#d34336';
 
@@ -2131,7 +2106,7 @@ polyfill-next-selector {
 
       animateFloatingLabel: function() {
         if (!this.floatingLabel || this.labelAnimated) {
-          return;
+          return false;
         }
 
         if (!this.$.labelText.cachedTransform) {
@@ -2141,7 +2116,7 @@ polyfill-next-selector {
         // If there's still no cached transform, the input is invisible so don't
         // do the animation.
         if (!this.$.labelText.cachedTransform) {
-          return;
+          return false;
         }
 
         this.labelAnimated = true;
@@ -2165,12 +2140,23 @@ polyfill-next-selector {
           this.input.placeholder = '';
         }
 
+        return true;
       },
 
       _labelVisibleChanged: function(old) {
         // do not do the animation on first render
         if (old !== undefined) {
-          this.animateFloatingLabel();
+          if (!this.animateFloatingLabel()) {
+            this.updateInputLabel(this.input, this.label);
+          }
+        }
+      },
+
+      labelVisibleChanged: function() {
+        if (this.labelVisible === 'true') {
+          this.labelVisible = true;
+        } else if (this.labelVisible === 'false') {
+          this.labelVisible = false;
         }
       },
 
@@ -2260,10 +2246,6 @@ polyfill-next-selector {
         // Animations only run when the user interacts with the input
         this.underlineAnimated = true;
 
-        // Cursor animation only runs if the input is empty
-        if (this._labelVisible) {
-          this.cursorAnimated = true;
-        }
         // Handle interrupted animation
         this.async(function() {
           this.transitionEndAction();
@@ -2272,7 +2254,6 @@ polyfill-next-selector {
 
       transitionEndAction: function() {
         this.underlineAnimated = false;
-        this.cursorAnimated = false;
         this.labelAnimated = false;
         if (this._labelVisible) {
           this.input.placeholder = this.label;
@@ -2286,6 +2267,47 @@ polyfill-next-selector {
   </script>
 
 </polymer-element>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2354,14 +2376,21 @@ that it uses one color only.
 
     <paper-spinner class="blue" active></paper-spinner>
 
+Alt attribute should be set to provide adequate context for accessibility. If not provided,
+it defaults to 'loading'.
+Empty alt can be provided to mark the element as decorative if alternative content is provided
+in another form (e.g. a text block following the spinner).
+
+##### Example
+  <paper-spinner alt="Loading contacts list" active></paper-spinner>
+
 @element paper-spinner
 @blurb Element providing material design circular spinner.
 @status alpha
 @homepage http://polymerlabs.github.io/paper-spinner
 -->
 
-<polymer-element name="paper-spinner" attributes="active">
-
+<polymer-element name="paper-spinner" attributes="active alt" role="progressbar">
   <template>
     <style>/*
     @license
@@ -2659,7 +2688,7 @@ that it uses one color only.
   to { transform: rotate(-130deg); }
 }
 
-#spinnerContainer.warmdown {
+#spinnerContainer.cooldown {
   /* duration: SHRINK_TIME */
   -webkit-animation: container-rotate 1568ms linear infinite, fade-out 400ms cubic-bezier(0.4, 0.0, 0.2, 1);
   animation: container-rotate 1568ms linear infinite, fade-out 400ms cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -2733,23 +2762,61 @@ that it uses one color only.
          * @type boolean
          * @default false
          */
-        active: {value: false, reflect: true}
+        active: {value: false, reflect: true},
+
+        /**
+         * Alternative text content for accessibility support.
+         * If alt is present, it will add an aria-label whose content matches alt when active.
+         * If alt is not present, it will default to 'loading' as the alt value.
+         * @attribute alt
+         * @type string
+         * @default 'loading'
+         */
+        alt: {value: 'loading', reflect: true}
+      },
+
+      ready: function() {
+        // Allow user-provided `aria-label` take preference to any other text alternative.
+        if (this.hasAttribute('aria-label')) {
+          this.alt = this.getAttribute('aria-label');
+        } else {
+          this.setAttribute('aria-label', this.alt);
+        }
+        if (!this.active) {
+          this.setAttribute('aria-hidden', 'true');
+        }
       },
 
       activeChanged: function() {
         if (this.active) {
+          this.$.spinnerContainer.classList.remove('cooldown');
           this.$.spinnerContainer.classList.add('active');
+          this.removeAttribute('aria-hidden');
         } else {
-          this.$.spinnerContainer.classList.add('warmdown');
+          this.$.spinnerContainer.classList.add('cooldown');
+          this.setAttribute('aria-hidden', 'true');
         }
       },
 
+      altChanged: function() {
+        if (this.alt === '') {
+          this.setAttribute('aria-hidden', 'true');
+        } else {
+          this.removeAttribute('aria-hidden');
+        }
+        this.setAttribute('aria-label', this.alt);
+      },
+
       reset: function() {
-        this.$.spinnerContainer.classList.remove('active', 'warmdown');
+        this.$.spinnerContainer.classList.remove('active', 'cooldown');
       }
     });
   </script>
 </polymer-element>
+
+
+
+
 
 
 
@@ -2796,6 +2863,241 @@ that it uses one color only.
 
 
 
+
+<script>
+
+(function(scope) {
+
+/**
+  `Polymer.CoreResizable` and `Polymer.CoreResizer` are a set of mixins that can be used
+  in Polymer elements to coordinate the flow of resize events between "resizers" (elements
+  that control the size or hidden state of their children) and "resizables" (elements that
+  need to be notified when they are resized or un-hidden by their parents in order to take
+  action on their new measurements).
+
+  Elements that perform measurement should add the `Core.Resizable` mixin to their 
+  Polymer prototype definition and listen for the `core-resize` event on themselves.
+  This event will be fired when they become showing after having been hidden,
+  when they are resized explicitly by a `CoreResizer`, or when the window has been resized.
+  Note, the `core-resize` event is non-bubbling.
+
+  `CoreResizable`'s must manually call the `resizableAttachedHandler` from the element's
+  `attached` callback and `resizableDetachedHandler` from the element's `detached`
+  callback.
+
+    @element CoreResizable
+    @status beta
+    @homepage github.io
+*/
+
+  scope.CoreResizable = {
+
+    /**
+     * User must call from `attached` callback
+     *
+     * @method resizableAttachedHandler
+     */
+    resizableAttachedHandler: function(cb) {
+      cb = cb || this._notifyResizeSelf;
+      this.async(function() {
+        var detail = {callback: cb, hasParentResizer: false};
+        this.fire('core-request-resize', detail);
+        if (!detail.hasParentResizer) {
+          this._boundWindowResizeHandler = cb.bind(this);
+          // log('adding window resize handler', null, this);
+          window.addEventListener('resize', this._boundWindowResizeHandler);
+        }
+      }.bind(this));
+    },
+
+    /**
+     * User must call from `detached` callback
+     *
+     * @method resizableDetachedHandler
+     */
+    resizableDetachedHandler: function() {
+      this.fire('core-request-resize-cancel', null, this, false);
+      if (this._boundWindowResizeHandler) {
+        window.removeEventListener('resize', this._boundWindowResizeHandler);
+      }
+    },
+
+    // Private: fire non-bubbling resize event to self; returns whether
+    // preventDefault was called, indicating that children should not
+    // be resized
+    _notifyResizeSelf: function() {
+      return this.fire('core-resize', null, this, false).defaultPrevented;
+    }
+
+  };
+
+/**
+  `Polymer.CoreResizable` and `Polymer.CoreResizer` are a set of mixins that can be used
+  in Polymer elements to coordinate the flow of resize events between "resizers" (elements
+  that control the size or hidden state of their children) and "resizables" (elements that
+  need to be notified when they are resized or un-hidden by their parents in order to take
+  action on their new measurements).
+
+  Elements that cause their children to be resized (e.g. a splitter control) or hide/show
+  their children (e.g. overlay) should add the `Core.CoreResizer` mixin to their 
+  Polymer prototype definition and then call `this.notifyResize()` any time the element
+  resizes or un-hides its children.
+
+  `CoreResizer`'s must manually call the `resizerAttachedHandler` from the element's
+  `attached` callback and `resizerDetachedHandler` from the element's `detached`
+  callback.
+
+  Note: `CoreResizer` extends `CoreResizable`, and can listen for the `core-resize` event
+  on itself if it needs to perform resize work on itself before notifying children.
+  In this case, returning `false` from the `core-resize` event handler (or calling
+  `preventDefault` on the event) will prevent notification of children if required.
+
+  @element CoreResizer
+  @extends CoreResizable
+  @status beta
+  @homepage github.io
+*/
+
+  scope.CoreResizer = Polymer.mixin({
+
+    /**
+     * User must call from `attached` callback
+     *
+     * @method resizerAttachedHandler
+     */
+    resizerAttachedHandler: function() {
+      this.resizableAttachedHandler(this.notifyResize);
+      this._boundResizeRequested = this._boundResizeRequested || this._handleResizeRequested.bind(this);
+      var listener;
+      if (this.resizerIsPeer) {
+        listener = this.parentElement || (this.parentNode && this.parentNode.host);
+        listener._resizerPeers = listener._resizerPeers || [];
+        listener._resizerPeers.push(this);
+      } else {
+        listener = this;
+      }
+      listener.addEventListener('core-request-resize', this._boundResizeRequested);
+      this._resizerListener = listener;
+    },
+
+    /**
+     * User must call from `detached` callback
+     *
+     * @method resizerDetachedHandler
+     */
+    resizerDetachedHandler: function() {
+      this.resizableDetachedHandler();
+      this._resizerListener.removeEventListener('core-request-resize', this._boundResizeRequested);
+    },
+
+    /**
+     * User should call when resizing or un-hiding children
+     *
+     * @method notifyResize
+     */
+    notifyResize: function() {
+      // Notify self
+      if (!this._notifyResizeSelf()) {
+        // Notify requestors if default was not prevented
+        var r = this.resizeRequestors;
+        if (r) {
+          for (var i=0; i<r.length; i++) {
+            var ri = r[i];
+            if (!this.resizerShouldNotify || this.resizerShouldNotify(ri.target)) {
+              // log('notifying resize', null, ri.target, true);
+              ri.callback.apply(ri.target);
+              // logEnd();
+            }
+          }
+        }
+      }
+    },
+
+    /**
+     * User should implement to introduce filtering when notifying children.
+     * Generally, children that are hidden by the CoreResizer (e.g. non-active
+     * pages) need not be notified during resize, since they will be notified
+     * again when becoming un-hidden.
+     *
+     * Return `true` if CoreResizable passed as argument should be notified of
+     * resize.
+     *
+     * @method resizeerShouldNotify
+     * @param {Element} el
+     */
+     // resizeerShouldNotify: function(el) { }  // User to implement if needed
+
+    /**
+     * Set to `true` if the resizer is actually a peer to the elements it
+     * resizes (e.g. splitter); in this case it will listen for resize requests
+     * events from its peers on its parent.
+     *
+     * @property resizerIsPeer
+     * @type Boolean
+     * @default false
+     */
+
+    // Private: Handle requests for resize
+    _handleResizeRequested: function(e) {
+      var target = e.path[0];
+      if ((target == this) || 
+          (target == this._resizerListener) || 
+          (this._resizerPeers && this._resizerPeers.indexOf(target) < 0)) {
+        return;
+      }
+      // log('resize requested', target, this);
+      if (!this.resizeRequestors) {
+        this.resizeRequestors = [];
+      }
+      this.resizeRequestors.push({target: target, callback: e.detail.callback});
+      target.addEventListener('core-request-resize-cancel', this._cancelResizeRequested.bind(this));
+      e.detail.hasParentResizer = true;
+      e.stopPropagation();
+    },
+
+    // Private: Handle cancellation requests for resize
+    _cancelResizeRequested: function(e) {
+      // Exit early if we're already out of the DOM (resizeRequestors will already be null)
+      if (this.resizeRequestors) {
+        for (var i=0; i<this.resizeRequestors.length; i++) {
+          if (this.resizeRequestors[i].target == e.target) {
+            // log('resizeCanceled', e.target, this);
+            this.resizeRequestors.splice(i, 1);
+            break;
+          }
+        }
+      }
+    }
+
+  }, Polymer.CoreResizable);
+
+  // function prettyName(el) {
+  //   return el.localName + (el.id ? '#' : '') + el.id;
+  // }
+
+  // function log(what, from, to, group) {
+  //   var args = [what];
+  //   if (from) {
+  //     args.push('from ' + prettyName(from));
+  //   }
+  //   if (to) {
+  //     args.push('to ' + prettyName(to));
+  //   }
+  //   if (group) {
+  //     console.group.apply(console, args);
+  //   } else {
+  //     console.log.apply(console, args);
+  //   }
+  // }
+
+  // function logEnd() {
+  //   console.groupEnd();
+  // }
+
+})(Polymer);
+
+</script>
+
 <polymer-element name="core-splitter" attributes="direction locked minSize allowOverflow" on-trackstart="{{trackStart}}" on-track="{{track}}" on-down="{{preventSelection}}">
 
 <template>
@@ -2832,7 +3134,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 </template>
 <script>
 
-  Polymer('core-splitter', {
+  Polymer(Polymer.mixin({
 
     /**
      * Possible values are `left`, `right`, `up` and `down`.
@@ -2873,8 +3175,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
      */
     allowOverflow: false,
 
+    // Listen for resize requests on parent, since splitter is peer to resizables
+    resizerIsPeer: true,
+
     ready: function() {
       this.directionChanged();
+    },
+
+    attached: function() {
+      this.resizerAttachedHandler();
+    },
+
+    detached: function() {
+      this.resizerDetachedHandler();
     },
 
     domReady: function() {
@@ -2916,15 +3229,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var d = e[this.horizontal ? 'dy' : 'dx'];
       this.target.style[this.dimension] =
           this.size + (this.isNext ? -d : d) + 'px';
+      this.notifyResize();
     },
 
     preventSelection: function(e) {
       e.preventDefault();
     }
-  });
+
+  }, Polymer.CoreResizer));
 
 </script>
 </polymer-element>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3119,7 +3446,7 @@ polyfill-next-selector { content: ':host .indent'; }
       if (old) {
         bar.removeAttribute(this.toLayoutAttrName(old));
       }
-      if (this.justify) {
+      if (justify) {
         bar.setAttribute(this.toLayoutAttrName(justify), '');
       }
     },
@@ -3134,6 +3461,10 @@ polyfill-next-selector { content: ':host .indent'; }
 
 </script>
 </polymer-element>
+
+
+
+
 
 
 
@@ -3341,6 +3672,7 @@ html /deep/ .paper-shadow-bottom-z-5 {
     });
   </script>
 </polymer-element>
+
 
 
 
@@ -3563,7 +3895,7 @@ object like this: `{v: 'top', h: 'right'}`.
 <script>
 (function() {
 
-  Polymer('core-overlay', {
+  Polymer(Polymer.mixin({
 
     publish: {
       /**
@@ -3684,7 +4016,19 @@ object like this: `{v: 'top', h: 'right'}`.
       'keydown': 'keydownHandler',
       'core-transitionend': 'transitionend'
     },
-    
+
+    attached: function() {
+      this.resizerAttachedHandler();
+    },
+
+    detached: function() {
+      this.resizerDetachedHandler();
+    },
+
+    resizerShouldNotify: function() {
+      return this.opened;
+    },
+
     registerCallback: function(element) {
       this.layer = document.createElement('core-overlay-layer');
       this.keyHelper = document.createElement('core-key-helper');
@@ -3835,6 +4179,7 @@ object like this: `{v: 'top', h: 'right'}`.
     // tasks which cause the overlay to actually open; typically play an
     // animation
     renderOpened: function() {
+      this.notifyResize();
       var transition = this.getTransition();
       if (transition) {
         transition.go(this.target, {opened: this.opened});
@@ -4123,8 +4468,9 @@ object like this: `{v: 'top', h: 'right'}`.
         };
       }
       return this[bound];
-    },
-  });
+    }
+
+  }, Polymer.CoreResizer));
 
   // TODO(sorvell): This should be an element with private state so it can
   // be independent of overlay.
@@ -4206,6 +4552,7 @@ object like this: `{v: 'top', h: 'right'}`.
 })();
 </script>
 </polymer-element>
+
 
 
 
@@ -4450,7 +4797,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 </polymer-element>
 
 
-<polymer-element name="paper-dialog" extends="paper-dialog-base" role="dialog" noscript="">
+<polymer-element name="paper-dialog" extends="paper-dialog-base" role="dialog" layout="" vertical="" noscript="">
 
 <template>
 
@@ -4476,7 +4823,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <paper-shadow z="3" fit=""></paper-shadow>
 
   <!-- need this because the host needs to be overflow: visible -->
-  <div id="scroller" relative="">
+  <div id="scroller" relative="" flex="" auto="">
     <template if="{{heading}}">
       <h1>{{heading}}</h1>
     </template>
@@ -4487,6 +4834,48 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 </template>
 
 </polymer-element>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4610,6 +4999,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         style[dims.position.v] = null;
         dims.position.v_by = null;
       }
+      style.width = null;
+      style.height = null;
       this.super();
     },
 
@@ -4734,35 +5125,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 
 
-<script src="packages/core_elements/src/web-animations-next/src/dev.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/scope.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/timing-utilities.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/normalize-keyframes.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/animation-node.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/effect.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/property-interpolation.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/animation.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/apply.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/element-animatable.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/interpolation.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/player.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/tick.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/handler-utils.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/shadow-handler.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/number-handler.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/visibility-handler.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/color-handler.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/dimension-handler.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/box-handler.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/transform-handler.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/property-names.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/timeline.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/maxifill-player.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/animation-constructor.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/effect-callback.js"></script>
-<script src="packages/core_elements/src/web-animations-next/src/group-constructors.js"></script>
-
-
+<script src="packages/core_elements/src/web-animations-js/web-animations-next-lite.min.js"></script>
 
 
 
@@ -5016,6 +5379,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script src="packages/core_elements/src/core-focusable/polymer-mixin.js"></script>
 <script src="packages/core_elements/src/core-focusable/core-focusable.js"></script>
 
@@ -5025,106 +5410,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 // This empty script is here to workaround issue
 // https://github.com/dart-lang/core-elements/issues/11
 </script>
-
-<polymer-element name="paper-button-base" tabindex="0">
-
-<script>
-
-  (function() {
-
-    var p = {
-
-      eventDelegates: {
-        down: 'downAction'
-      },
-
-      activeChanged: function() {
-        this.super();
-
-        if (this.$.ripple) {
-          if (this.active) {
-            // FIXME: remove when paper-ripple can have a default 'down' state.
-            if (!this.lastEvent) {
-              var rect = this.getBoundingClientRect();
-              this.lastEvent = {
-                x: rect.left + rect.width / 2,
-                y: rect.top + rect.height / 2
-              }
-            }
-            this.$.ripple.downAction(this.lastEvent);
-          } else {
-            this.$.ripple.upAction();
-          }
-        }
-
-        this.adjustZ();
-      },
-
-      disabledChanged: function() {
-        this._disabledChanged();
-        this.adjustZ();
-      },
-
-      recenteringTouchChanged: function() {
-        if (this.$.ripple) {
-          this.$.ripple.classList.toggle('recenteringTouch', this.recenteringTouch);
-        }
-      },
-
-      fillChanged: function() {
-        if (this.$.ripple) {
-          this.$.ripple.classList.toggle('fill', this.fill);
-        }
-      },
-
-      adjustZ: function() {
-        if (!this.$.shadow) {
-          return;
-        }
-        if (this.active) {
-          this.$.shadow.setZ(2);
-        } else if (this.disabled) {
-          this.$.shadow.setZ(0);
-        } else {
-          this.$.shadow.setZ(1);
-        }
-      },
-
-      downAction: function(e) {
-        this._downAction();
-
-        if (this.hasAttribute('noink')) {
-          return;
-        }
-
-        this.lastEvent = e;
-        if (!this.$.ripple) {
-          var ripple = document.createElement('paper-ripple');
-          ripple.setAttribute('id', 'ripple');
-          ripple.setAttribute('fit', '');
-          if (this.recenteringTouch) {
-            ripple.classList.add('recenteringTouch');
-          }
-          if (!this.fill) {
-            ripple.classList.add('circle');
-          }
-          this.$.ripple = ripple;
-          this.shadowRoot.insertBefore(ripple, this.shadowRoot.firstChild);
-          // No need to forward the event to the ripple because the ripple
-          // is triggered in activeChanged
-        }
-      }
-
-    };
-
-    Polymer.mixin2(p, Polymer.CoreFocusable);
-    Polymer(p);
-
-  })();
-
-</script>
-</polymer-element>
-
 
 
 <polymer-element name="paper-ripple" attributes="initialOpacity opacityDecayVelocity">
@@ -5535,6 +5820,107 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 </polymer-element>
 
 
+<polymer-element name="paper-button-base" tabindex="0">
+
+<script>
+
+  (function() {
+
+    var p = {
+
+      eventDelegates: {
+        down: 'downAction'
+      },
+
+      activeChanged: function() {
+        this.super();
+
+        if (this.$.ripple) {
+          if (this.active) {
+            // FIXME: remove when paper-ripple can have a default 'down' state.
+            if (!this.lastEvent) {
+              var rect = this.getBoundingClientRect();
+              this.lastEvent = {
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2
+              }
+            }
+            this.$.ripple.downAction(this.lastEvent);
+          } else {
+            this.$.ripple.upAction();
+          }
+        }
+
+        this.adjustZ();
+      },
+
+      disabledChanged: function() {
+        this._disabledChanged();
+        this.adjustZ();
+      },
+
+      recenteringTouchChanged: function() {
+        if (this.$.ripple) {
+          this.$.ripple.classList.toggle('recenteringTouch', this.recenteringTouch);
+        }
+      },
+
+      fillChanged: function() {
+        if (this.$.ripple) {
+          this.$.ripple.classList.toggle('fill', this.fill);
+        }
+      },
+
+      adjustZ: function() {
+        if (!this.$.shadow) {
+          return;
+        }
+        if (this.active) {
+          this.$.shadow.setZ(2);
+        } else if (this.disabled) {
+          this.$.shadow.setZ(0);
+        } else {
+          this.$.shadow.setZ(1);
+        }
+      },
+
+      downAction: function(e) {
+        this._downAction();
+
+        if (this.hasAttribute('noink')) {
+          return;
+        }
+
+        this.lastEvent = e;
+        if (!this.$.ripple) {
+          var ripple = document.createElement('paper-ripple');
+          ripple.setAttribute('id', 'ripple');
+          ripple.setAttribute('fit', '');
+          if (this.recenteringTouch) {
+            ripple.classList.add('recenteringTouch');
+          }
+          if (!this.fill) {
+            ripple.classList.add('circle');
+          }
+          this.$.ripple = ripple;
+          this.shadowRoot.insertBefore(ripple, this.shadowRoot.firstChild);
+          // No need to forward the event to the ripple because the ripple
+          // is triggered in activeChanged
+        }
+      }
+
+    };
+
+    Polymer.mixin2(p, Polymer.CoreFocusable);
+    Polymer(p);
+
+  })();
+
+</script>
+</polymer-element>
+
+
+
 <polymer-element name="paper-icon-button" extends="paper-button-base" attributes="src icon" role="button">
 
   <template>
@@ -5635,6 +6021,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <polymer-element name="paper-input">
 
 <template>
@@ -5687,16 +6096,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       /**
        * The current value of the input.
-       *
+       * 
        * @attribute value
        * @type String
        * @default ''
        */
       value: '',
-
+      
       /**
        * The most recently committed value of the input.
-       *
+       * 
        * @attribute committedValue
        * @type String
        * @default ''
@@ -5721,6 +6130,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 </script>
 
 </polymer-element>
+
+
+
+
+
+
 
 
 
@@ -5767,7 +6182,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       .button-content {
-        height: 100%;
         padding: 0.9em 1em;
       }
 
@@ -5830,6 +6244,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     });
   </script>
 </polymer-element>
+
+
+
+
+
+
+
 
 
 
@@ -5983,8 +6404,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
 
     function keyboardEventToKey(ev) {
-      // fall back from .key, to .keyIdentifier, and then to .keyCode
-      var normalizedKey = transformKey(ev.key) || transformKeyIdentifier(ev.keyIdentifier) || transformKeyCode(ev.keyCode) || '';
+      // fall back from .key, to .keyIdentifier, to .keyCode, and then to .detail.key to support artificial keyboard events
+      var normalizedKey = transformKey(ev.key) || transformKeyIdentifier(ev.keyIdentifier) || transformKeyCode(ev.keyCode) || transformKey(ev.detail.key) || '';
       return {
         shift: ev.shiftKey,
         ctrl: ev.ctrlKey,
@@ -6244,6 +6665,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 </script>
 </polymer-element>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6995,7 +7430,7 @@ html /deep/ core-splitter.horizontal {
 
   <a href="https://plus.google.com/111161704800557995247" rel="publisher"></a>
 
-  
+  <script src="index.html.polymer.bootstrap.dart.js" async=""></script>
 
 
-<script src="index.html_bootstrap.dart.js" async=""></script></body></html>
+</body></html>

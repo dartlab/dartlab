@@ -84,12 +84,15 @@
       keyMaps: [],  // stores maps added by addKeyMap
       overlays: [], // highlighting overlays, as added by addOverlay
       modeGen: 0,   // bumped when mode/overlay changes, used to invalidate highlighting info
-      overwrite: false, focused: false,
+      overwrite: false,
+      delayingBlurEvent: false,
+      focused: false,
       suppressEdits: false, // used to disable editing during key handlers when in readOnly mode
       pasteIncoming: false, cutIncoming: false, // help recognize paste/cut edits in input.poll
       draggingText: false,
       highlight: new Delayed(), // stores highlight worker timeout
-      keySeq: null  // Unfinished key sequence
+      keySeq: null,  // Unfinished key sequence
+      specialChars: null
     };
 
     var cm = this;
@@ -593,7 +596,7 @@
                                                  "CodeMirror-linenumber CodeMirror-gutter-elt"));
       var innerW = test.firstChild.offsetWidth, padding = test.offsetWidth - innerW;
       display.lineGutter.style.width = "";
-      display.lineNumInnerWidth = Math.max(innerW, display.lineGutter.offsetWidth - padding);
+      display.lineNumInnerWidth = Math.max(innerW, display.lineGutter.offsetWidth - padding) + 1;
       display.lineNumWidth = display.lineNumInnerWidth + padding;
       display.lineNumChars = display.lineNumInnerWidth ? last.length : -1;
       display.lineGutter.style.width = display.lineNumWidth + "px";
@@ -1383,8 +1386,14 @@
         return false;
       }
 
-      if (text.charCodeAt(0) == 0x200b && cm.doc.sel == cm.display.selForContextMenu && !prevInput)
-        prevInput = "\u200b";
+      if (cm.doc.sel == cm.display.selForContextMenu) {
+        if (text.charCodeAt(0) == 0x200b) {
+          if (!prevInput) prevInput = "\u200b";
+        } else if (prevInput == "\u200b") {
+          text = text.slice(1);
+          prevInput = "";
+        }
+      }
       // Find the part of the input that is actually new
       var same = 0, l = Math.min(prevInput.length, text.length);
       while (same < l && prevInput.charCodeAt(same) == text.charCodeAt(same)) ++same;
@@ -1460,7 +1469,7 @@
         if (te.selectionStart != null) {
           if (!ie || (ie && ie_version < 9)) prepareSelectAllHack();
           var i = 0, poll = function() {
-            if (display.selForContextMenu == cm.doc.sel && te.selectionStart == 0)
+            if (display.selForContextMenu == cm.doc.sel && te.selectionStart == 0 && input.prevInput == "\u200b")
               operation(cm, commands.selectAll)(cm);
             else if (i++ < 10) display.detectingSelectAll = setTimeout(poll, 500);
             else display.input.reset();
@@ -1493,6 +1502,7 @@
     this.cm = cm;
     this.lastAnchorNode = this.lastAnchorOffset = this.lastFocusNode = this.lastFocusOffset = null;
     this.polling = new Delayed();
+    this.gracePeriod = false;
   }
 
   ContentEditableInput.prototype = copyObj({
@@ -1627,8 +1637,19 @@
         sel.removeAllRanges();
         sel.addRange(rng);
         if (old && sel.anchorNode == null) sel.addRange(old);
+        else if (gecko) this.startGracePeriod();
       }
       this.rememberSelection();
+    },
+
+    startGracePeriod: function() {
+      var input = this;
+      clearTimeout(this.gracePeriod);
+      this.gracePeriod = setTimeout(function() {
+        input.gracePeriod = false;
+        if (input.selectionChanged())
+          input.cm.operation(function() { input.cm.curOp.selectionChanged = true; });
+      }, 20);
     },
 
     showMultipleSelections: function(info) {
@@ -1673,12 +1694,15 @@
       this.polling.set(this.cm.options.pollInterval, poll);
     },
 
-    pollSelection: function() {
-      if (this.composing) return;
+    selectionChanged: function() {
+      var sel = window.getSelection();
+      return sel.anchorNode != this.lastAnchorNode || sel.anchorOffset != this.lastAnchorOffset ||
+        sel.focusNode != this.lastFocusNode || sel.focusOffset != this.lastFocusOffset;
+    },
 
-      var sel = window.getSelection(), cm = this.cm;
-      if (sel.anchorNode != this.lastAnchorNode || sel.anchorOffset != this.lastAnchorOffset ||
-          sel.focusNode != this.lastFocusNode || sel.focusOffset != this.lastFocusOffset) {
+    pollSelection: function() {
+      if (!this.composing && !this.gracePeriod && this.selectionChanged()) {
+        var sel = window.getSelection(), cm = this.cm;
         this.rememberSelection();
         var anchor = domToPos(cm, sel.anchorNode, sel.anchorOffset);
         var head = domToPos(cm, sel.focusNode, sel.focusOffset);
@@ -3477,6 +3501,7 @@
       break;
     case 3:
       if (captureRightClick) onContextMenu(cm, e);
+      else delayBlurEvent(cm);
       break;
     }
   }
@@ -3519,10 +3544,11 @@
         e_preventDefault(e2);
         if (!modifier)
           extendSelection(cm.doc, start);
-        display.input.focus();
-        // Work around unexplainable focus problem in IE9 (#2127)
-        if (ie && ie_version == 9)
+        // Work around unexplainable focus problem in IE9 (#2127) and Chrome (#3081)
+        if (webkit || ie && ie_version == 9)
           setTimeout(function() {document.body.focus(); display.input.focus();}, 20);
+        else
+          display.input.focus();
       }
     });
     // Let the drag handler handle this.
@@ -3548,6 +3574,7 @@
         ourRange = new Range(start, start);
     } else {
       ourRange = doc.sel.primary();
+      ourIndex = doc.sel.primIndex;
     }
 
     if (e.altKey) {
@@ -3579,7 +3606,7 @@
       ourIndex = ranges.length;
       setSelection(doc, normalizeSelection(ranges.concat([ourRange]), ourIndex),
                    {scroll: false, origin: "*mouse"});
-    } else if (ranges.length > 1 && ranges[ourIndex].empty() && type == "single") {
+    } else if (ranges.length > 1 && ranges[ourIndex].empty() && type == "single" && !e.shiftKey) {
       setSelection(doc, normalizeSelection(ranges.slice(0, ourIndex).concat(ranges.slice(ourIndex + 1)), 0));
       startSel = doc.sel;
     } else {
@@ -4052,7 +4079,19 @@
 
   // FOCUS/BLUR EVENTS
 
+  function delayBlurEvent(cm) {
+    cm.state.delayingBlurEvent = true;
+    setTimeout(function() {
+      if (cm.state.delayingBlurEvent) {
+        cm.state.delayingBlurEvent = false;
+        onBlur(cm);
+      }
+    }, 100);
+  }
+
   function onFocus(cm) {
+    if (cm.state.delayingBlurEvent) cm.state.delayingBlurEvent = false;
+
     if (cm.options.readOnly == "nocursor") return;
     if (!cm.state.focused) {
       signal(cm, "focus", cm);
@@ -4070,6 +4109,8 @@
     restartBlink(cm);
   }
   function onBlur(cm) {
+    if (cm.state.delayingBlurEvent) return;
+
     if (cm.state.focused) {
       signal(cm, "blur", cm);
       cm.state.focused = false;
@@ -4826,7 +4867,7 @@
 
     getHelpers: function(pos, type) {
       var found = [];
-      if (!helpers.hasOwnProperty(type)) return helpers;
+      if (!helpers.hasOwnProperty(type)) return found;
       var help = helpers[type], mode = this.getModeAt(pos);
       if (typeof mode[type] == "string") {
         if (help[mode[type]]) found.push(help[mode[type]]);
@@ -4907,12 +4948,6 @@
         ++i;
       });
     }),
-
-    addLineWidget: methodOp(function(handle, node, options) {
-      return addLineWidget(this, handle, node, options);
-    }),
-
-    removeLineWidget: function(widget) { widget.clear(); },
 
     lineInfo: function(line) {
       if (typeof line == "number") {
@@ -5188,10 +5223,10 @@
     clearCaches(cm);
     regChange(cm);
   }, true);
-  option("specialChars", /[\t\u0000-\u0019\u00ad\u200b-\u200f\u2028\u2029\ufeff]/g, function(cm, val) {
-    cm.options.specialChars = new RegExp(val.source + (val.test("\t") ? "" : "|\t"), "g");
-    cm.refresh();
-  }, true);
+  option("specialChars", /[\t\u0000-\u0019\u00ad\u200b-\u200f\u2028\u2029\ufeff]/g, function(cm, val, old) {
+    cm.state.specialChars = new RegExp(val.source + (val.test("\t") ? "" : "|\t"), "g");
+    if (old != CodeMirror.Init) cm.refresh();
+  });
   option("specialCharPlaceholder", defaultSpecialCharPlaceholder, function(cm) {cm.refresh();}, true);
   option("electricChars", true);
   option("inputStyle", mobile ? "contenteditable" : "textarea", function() {
@@ -6433,10 +6468,10 @@
 
   // Line widgets are block elements displayed above or below a line.
 
-  var LineWidget = CodeMirror.LineWidget = function(cm, node, options) {
+  var LineWidget = CodeMirror.LineWidget = function(doc, node, options) {
     if (options) for (var opt in options) if (options.hasOwnProperty(opt))
       this[opt] = options[opt];
-    this.cm = cm;
+    this.doc = doc;
     this.node = node;
   };
   eventMixin(LineWidget);
@@ -6447,52 +6482,55 @@
   }
 
   LineWidget.prototype.clear = function() {
-    var cm = this.cm, ws = this.line.widgets, line = this.line, no = lineNo(line);
+    var cm = this.doc.cm, ws = this.line.widgets, line = this.line, no = lineNo(line);
     if (no == null || !ws) return;
     for (var i = 0; i < ws.length; ++i) if (ws[i] == this) ws.splice(i--, 1);
     if (!ws.length) line.widgets = null;
     var height = widgetHeight(this);
-    runInOp(cm, function() {
+    updateLineHeight(line, Math.max(0, line.height - height));
+    if (cm) runInOp(cm, function() {
       adjustScrollWhenAboveVisible(cm, line, -height);
       regLineChange(cm, no, "widget");
-      updateLineHeight(line, Math.max(0, line.height - height));
     });
   };
   LineWidget.prototype.changed = function() {
-    var oldH = this.height, cm = this.cm, line = this.line;
+    var oldH = this.height, cm = this.doc.cm, line = this.line;
     this.height = null;
     var diff = widgetHeight(this) - oldH;
     if (!diff) return;
-    runInOp(cm, function() {
+    updateLineHeight(line, line.height + diff);
+    if (cm) runInOp(cm, function() {
       cm.curOp.forceUpdate = true;
       adjustScrollWhenAboveVisible(cm, line, diff);
-      updateLineHeight(line, line.height + diff);
     });
   };
 
   function widgetHeight(widget) {
     if (widget.height != null) return widget.height;
+    var cm = widget.doc.cm;
+    if (!cm) return 0;
     if (!contains(document.body, widget.node)) {
       var parentStyle = "position: relative;";
       if (widget.coverGutter)
-        parentStyle += "margin-left: -" + widget.cm.display.gutters.offsetWidth + "px;";
+        parentStyle += "margin-left: -" + cm.display.gutters.offsetWidth + "px;";
       if (widget.noHScroll)
-        parentStyle += "width: " + widget.cm.display.wrapper.clientWidth + "px;";
-      removeChildrenAndAdd(widget.cm.display.measure, elt("div", [widget.node], null, parentStyle));
+        parentStyle += "width: " + cm.display.wrapper.clientWidth + "px;";
+      removeChildrenAndAdd(cm.display.measure, elt("div", [widget.node], null, parentStyle));
     }
     return widget.height = widget.node.offsetHeight;
   }
 
-  function addLineWidget(cm, handle, node, options) {
-    var widget = new LineWidget(cm, node, options);
-    if (widget.noHScroll) cm.display.alignWidgets = true;
-    changeLine(cm.doc, handle, "widget", function(line) {
+  function addLineWidget(doc, handle, node, options) {
+    var widget = new LineWidget(doc, node, options);
+    var cm = doc.cm;
+    if (cm && widget.noHScroll) cm.display.alignWidgets = true;
+    changeLine(doc, handle, "widget", function(line) {
       var widgets = line.widgets || (line.widgets = []);
       if (widget.insertAt == null) widgets.push(widget);
       else widgets.splice(Math.min(widgets.length - 1, Math.max(0, widget.insertAt)), 0, widget);
       widget.line = line;
-      if (!lineIsHidden(cm.doc, line)) {
-        var aboveVisible = heightAtLine(line) < cm.doc.scrollTop;
+      if (cm && !lineIsHidden(doc, line)) {
+        var aboveVisible = heightAtLine(line) < doc.scrollTop;
         updateLineHeight(line, line.height + widgetHeight(widget));
         if (aboveVisible) addToScrollPos(cm, null, widget.height);
         cm.curOp.forceUpdate = true;
@@ -6712,7 +6750,9 @@
     // is needed on Webkit to be able to get line-level bounding
     // rectangles for it (in measureChar).
     var content = elt("span", null, null, webkit ? "padding-right: .1px" : null);
-    var builder = {pre: elt("pre", [content]), content: content, col: 0, pos: 0, cm: cm};
+    var builder = {pre: elt("pre", [content]), content: content,
+                   col: 0, pos: 0, cm: cm,
+                   splitSpaces: (ie || webkit) && cm.getOption("lineWrapping")};
     lineView.measure = {};
 
     // Iterate over the logical lines that make up this visual line.
@@ -6722,8 +6762,6 @@
       builder.addToken = buildToken;
       // Optionally wire in some hacks into the token-rendering
       // algorithm, to deal with browser quirks.
-      if ((ie || webkit) && cm.getOption("lineWrapping"))
-        builder.addToken = buildTokenSplitSpaces(builder.addToken);
       if (hasBadBidiRects(cm.display.measure) && (order = getOrder(line)))
         builder.addToken = buildTokenBadBidi(builder.addToken, order);
       builder.map = [];
@@ -6772,10 +6810,11 @@
   // the line map. Takes care to render special characters separately.
   function buildToken(builder, text, style, startStyle, endStyle, title, css) {
     if (!text) return;
-    var special = builder.cm.options.specialChars, mustWrap = false;
+    var displayText = builder.splitSpaces ? text.replace(/ {3,}/g, splitSpaces) : text;
+    var special = builder.cm.state.specialChars, mustWrap = false;
     if (!special.test(text)) {
       builder.col += text.length;
-      var content = document.createTextNode(text);
+      var content = document.createTextNode(displayText);
       builder.map.push(builder.pos, builder.pos + text.length, content);
       if (ie && ie_version < 9) mustWrap = true;
       builder.pos += text.length;
@@ -6786,7 +6825,7 @@
         var m = special.exec(text);
         var skipped = m ? m.index - pos : text.length - pos;
         if (skipped) {
-          var txt = document.createTextNode(text.slice(pos, pos + skipped));
+          var txt = document.createTextNode(displayText.slice(pos, pos + skipped));
           if (ie && ie_version < 9) content.appendChild(elt("span", [txt]));
           else content.appendChild(txt);
           builder.map.push(builder.pos, builder.pos + skipped, txt);
@@ -6823,22 +6862,17 @@
     builder.content.appendChild(content);
   }
 
-  function buildTokenSplitSpaces(inner) {
-    function split(old) {
-      var out = " ";
-      for (var i = 0; i < old.length - 2; ++i) out += i % 2 ? " " : "\u00a0";
-      out += " ";
-      return out;
-    }
-    return function(builder, text, style, startStyle, endStyle, title) {
-      inner(builder, text.replace(/ {3,}/g, split), style, startStyle, endStyle, title);
-    };
+  function splitSpaces(old) {
+    var out = " ";
+    for (var i = 0; i < old.length - 2; ++i) out += i % 2 ? " " : "\u00a0";
+    out += " ";
+    return out;
   }
 
   // Work around nonsense dimensions being reported for stretches of
   // right-to-left text.
   function buildTokenBadBidi(inner, order) {
-    return function(builder, text, style, startStyle, endStyle, title) {
+    return function(builder, text, style, startStyle, endStyle, title, css) {
       style = style ? style + " cm-force-border" : "cm-force-border";
       var start = builder.pos, end = start + text.length;
       for (;;) {
@@ -6847,8 +6881,8 @@
           var part = order[i];
           if (part.to > start && part.from <= start) break;
         }
-        if (part.to >= end) return inner(builder, text, style, startStyle, endStyle, title);
-        inner(builder, text.slice(0, part.to - start), style, startStyle, null, title);
+        if (part.to >= end) return inner(builder, text, style, startStyle, endStyle, title, css);
+        inner(builder, text.slice(0, part.to - start), style, startStyle, null, title, css);
         startStyle = null;
         text = text.slice(part.to - start);
         start = part.to;
@@ -7370,13 +7404,19 @@
       });
     }),
 
+    addLineWidget: docMethodOp(function(handle, node, options) {
+      return addLineWidget(this, handle, node, options);
+    }),
+    removeLineWidget: function(widget) { widget.clear(); },
+
     markText: function(from, to, options) {
       return markText(this, clipPos(this, from), clipPos(this, to), options, "range");
     },
     setBookmark: function(pos, options) {
       var realOpts = {replacedWith: options && (options.nodeType == null ? options.widget : options),
                       insertLeft: options && options.insertLeft,
-                      clearWhenEmpty: false, shared: options && options.shared};
+                      clearWhenEmpty: false, shared: options && options.shared,
+                      handleMouseEvents: options && options.handleMouseEvents};
       pos = clipPos(this, pos);
       return markText(this, pos, pos, realOpts, "bookmark");
     },
@@ -8641,7 +8681,7 @@
 
   // THE END
 
-  CodeMirror.version = "5.0.0";
+  CodeMirror.version = "5.1.0";
 
   return CodeMirror;
 });
@@ -8933,28 +8973,156 @@
   else // Plain browser env
     mod(CodeMirror);
 })(function(CodeMirror) {
-  var DEFAULT_BRACKETS = "()[]{}''\"\"";
-  var DEFAULT_TRIPLES = "'\"";
-  var DEFAULT_EXPLODE_ON_ENTER = "[]{}";
-  var SPACE_CHAR_REGEX = /\s/;
+  var defaults = {
+    pairs: "()[]{}''\"\"",
+    triples: "",
+    explode: "[]{}"
+  };
 
   var Pos = CodeMirror.Pos;
 
   CodeMirror.defineOption("autoCloseBrackets", false, function(cm, val, old) {
-    if (old != CodeMirror.Init && old)
-      cm.removeKeyMap("autoCloseBrackets");
-    if (!val) return;
-    var pairs = DEFAULT_BRACKETS, triples = DEFAULT_TRIPLES, explode = DEFAULT_EXPLODE_ON_ENTER;
-    if (typeof val == "string") pairs = val;
-    else if (typeof val == "object") {
-      if (val.pairs != null) pairs = val.pairs;
-      if (val.triples != null) triples = val.triples;
-      if (val.explode != null) explode = val.explode;
+    if (old && old != CodeMirror.Init) {
+      cm.removeKeyMap(keyMap);
+      cm.state.closeBrackets = null;
     }
-    var map = buildKeymap(pairs, triples);
-    if (explode) map.Enter = buildExplodeHandler(explode);
-    cm.addKeyMap(map);
+    if (val) {
+      cm.state.closeBrackets = val;
+      cm.addKeyMap(keyMap);
+    }
   });
+
+  function getOption(conf, name) {
+    if (name == "pairs" && typeof conf == "string") return conf;
+    if (typeof conf == "object" && conf[name] != null) return conf[name];
+    return defaults[name];
+  }
+
+  var bind = defaults.pairs + "`";
+  var keyMap = {Backspace: handleBackspace, Enter: handleEnter};
+  for (var i = 0; i < bind.length; i++)
+    keyMap["'" + bind.charAt(i) + "'"] = handler(bind.charAt(i));
+
+  function handler(ch) {
+    return function(cm) { return handleChar(cm, ch); };
+  }
+
+  function getConfig(cm) {
+    var deflt = cm.state.closeBrackets;
+    if (!deflt) return null;
+    var mode = cm.getModeAt(cm.getCursor());
+    return mode.closeBrackets || deflt;
+  }
+
+  function handleBackspace(cm) {
+    var conf = getConfig(cm);
+    if (!conf || cm.getOption("disableInput")) return CodeMirror.Pass;
+
+    var pairs = getOption(conf, "pairs");
+    var ranges = cm.listSelections();
+    for (var i = 0; i < ranges.length; i++) {
+      if (!ranges[i].empty()) return CodeMirror.Pass;
+      var around = charsAround(cm, ranges[i].head);
+      if (!around || pairs.indexOf(around) % 2 != 0) return CodeMirror.Pass;
+    }
+    for (var i = ranges.length - 1; i >= 0; i--) {
+      var cur = ranges[i].head;
+      cm.replaceRange("", Pos(cur.line, cur.ch - 1), Pos(cur.line, cur.ch + 1));
+    }
+  }
+
+  function handleEnter(cm) {
+    var conf = getConfig(cm);
+    var explode = conf && getOption(conf, "explode");
+    if (!explode || cm.getOption("disableInput")) return CodeMirror.Pass;
+
+    var ranges = cm.listSelections();
+    for (var i = 0; i < ranges.length; i++) {
+      if (!ranges[i].empty()) return CodeMirror.Pass;
+      var around = charsAround(cm, ranges[i].head);
+      if (!around || explode.indexOf(around) % 2 != 0) return CodeMirror.Pass;
+    }
+    cm.operation(function() {
+      cm.replaceSelection("\n\n", null);
+      cm.execCommand("goCharLeft");
+      ranges = cm.listSelections();
+      for (var i = 0; i < ranges.length; i++) {
+        var line = ranges[i].head.line;
+        cm.indentLine(line, null, true);
+        cm.indentLine(line + 1, null, true);
+      }
+    });
+  }
+
+  function handleChar(cm, ch) {
+    var conf = getConfig(cm);
+    if (!conf || cm.getOption("disableInput")) return CodeMirror.Pass;
+
+    var pairs = getOption(conf, "pairs");
+    var pos = pairs.indexOf(ch);
+    if (pos == -1) return CodeMirror.Pass;
+    var triples = getOption(conf, "triples");
+
+    var identical = pairs.charAt(pos + 1) == ch;
+    var ranges = cm.listSelections();
+    var opening = pos % 2 == 0;
+
+    var type, next;
+    for (var i = 0; i < ranges.length; i++) {
+      var range = ranges[i], cur = range.head, curType;
+      var next = cm.getRange(cur, Pos(cur.line, cur.ch + 1));
+      if (opening && !range.empty()) {
+        curType = "surround";
+      } else if ((identical || !opening) && next == ch) {
+        if (triples.indexOf(ch) >= 0 && cm.getRange(cur, Pos(cur.line, cur.ch + 3)) == ch + ch + ch)
+          curType = "skipThree";
+        else
+          curType = "skip";
+      } else if (identical && cur.ch > 1 && triples.indexOf(ch) >= 0 &&
+                 cm.getRange(Pos(cur.line, cur.ch - 2), cur) == ch + ch &&
+                 (cur.ch <= 2 || cm.getRange(Pos(cur.line, cur.ch - 3), Pos(cur.line, cur.ch - 2)) != ch)) {
+        curType = "addFour";
+      } else if (identical) {
+        if (!CodeMirror.isWordChar(next) && enteringString(cm, cur, ch)) curType = "both";
+        else return CodeMirror.Pass;
+      } else if (opening && (cm.getLine(cur.line).length == cur.ch ||
+                             isClosingBracket(next, pairs) ||
+                             /\s/.test(next))) {
+        curType = "both";
+      } else {
+        return CodeMirror.Pass;
+      }
+      if (!type) type = curType;
+      else if (type != curType) return CodeMirror.Pass;
+    }
+
+    var left = pos % 2 ? pairs.charAt(pos - 1) : ch;
+    var right = pos % 2 ? ch : pairs.charAt(pos + 1);
+    cm.operation(function() {
+      if (type == "skip") {
+        cm.execCommand("goCharRight");
+      } else if (type == "skipThree") {
+        for (var i = 0; i < 3; i++)
+          cm.execCommand("goCharRight");
+      } else if (type == "surround") {
+        var sels = cm.getSelections();
+        for (var i = 0; i < sels.length; i++)
+          sels[i] = left + sels[i] + right;
+        cm.replaceSelections(sels, "around");
+      } else if (type == "both") {
+        cm.replaceSelection(left + right, null);
+        cm.execCommand("goCharLeft");
+      } else if (type == "addFour") {
+        cm.replaceSelection(left + left + left + left, "before");
+        cm.execCommand("goCharRight");
+      }
+    });
+  }
+
+  function isClosingBracket(ch, pairs) {
+    var pos = pairs.lastIndexOf(ch);
+    return pos > -1 && pos % 2 == 1;
+  }
 
   function charsAround(cm, pos) {
     var str = cm.getRange(Pos(pos.line, pos.ch - 1),
@@ -8976,111 +9144,6 @@
       if (stream.pos >= pos.ch + 1) return /\bstring2?\b/.test(type1);
       stream.start = stream.pos;
     }
-  }
-
-  function buildKeymap(pairs, triples) {
-    var map = {
-      name : "autoCloseBrackets",
-      Backspace: function(cm) {
-        if (cm.getOption("disableInput")) return CodeMirror.Pass;
-        var ranges = cm.listSelections();
-        for (var i = 0; i < ranges.length; i++) {
-          if (!ranges[i].empty()) return CodeMirror.Pass;
-          var around = charsAround(cm, ranges[i].head);
-          if (!around || pairs.indexOf(around) % 2 != 0) return CodeMirror.Pass;
-        }
-        for (var i = ranges.length - 1; i >= 0; i--) {
-          var cur = ranges[i].head;
-          cm.replaceRange("", Pos(cur.line, cur.ch - 1), Pos(cur.line, cur.ch + 1));
-        }
-      }
-    };
-    var closingBrackets = "";
-    for (var i = 0; i < pairs.length; i += 2) (function(left, right) {
-      closingBrackets += right;
-      map["'" + left + "'"] = function(cm) {
-        if (cm.getOption("disableInput")) return CodeMirror.Pass;
-        var ranges = cm.listSelections(), type, next;
-        for (var i = 0; i < ranges.length; i++) {
-          var range = ranges[i], cur = range.head, curType;
-          var next = cm.getRange(cur, Pos(cur.line, cur.ch + 1));
-          if (!range.empty()) {
-            curType = "surround";
-          } else if (left == right && next == right) {
-            if (cm.getRange(cur, Pos(cur.line, cur.ch + 3)) == left + left + left)
-              curType = "skipThree";
-            else
-              curType = "skip";
-          } else if (left == right && cur.ch > 1 && triples.indexOf(left) >= 0 &&
-                     cm.getRange(Pos(cur.line, cur.ch - 2), cur) == left + left &&
-                     (cur.ch <= 2 || cm.getRange(Pos(cur.line, cur.ch - 3), Pos(cur.line, cur.ch - 2)) != left)) {
-            curType = "addFour";
-          } else if (left == '"' || left == "'") {
-            if (!CodeMirror.isWordChar(next) && enteringString(cm, cur, left)) curType = "both";
-            else return CodeMirror.Pass;
-          } else if (cm.getLine(cur.line).length == cur.ch || closingBrackets.indexOf(next) >= 0 || SPACE_CHAR_REGEX.test(next)) {
-            curType = "both";
-          } else {
-            return CodeMirror.Pass;
-          }
-          if (!type) type = curType;
-          else if (type != curType) return CodeMirror.Pass;
-        }
-
-        cm.operation(function() {
-          if (type == "skip") {
-            cm.execCommand("goCharRight");
-          } else if (type == "skipThree") {
-            for (var i = 0; i < 3; i++)
-              cm.execCommand("goCharRight");
-          } else if (type == "surround") {
-            var sels = cm.getSelections();
-            for (var i = 0; i < sels.length; i++)
-              sels[i] = left + sels[i] + right;
-            cm.replaceSelections(sels, "around");
-          } else if (type == "both") {
-            cm.replaceSelection(left + right, null);
-            cm.execCommand("goCharLeft");
-          } else if (type == "addFour") {
-            cm.replaceSelection(left + left + left + left, "before");
-            cm.execCommand("goCharRight");
-          }
-        });
-      };
-      if (left != right) map["'" + right + "'"] = function(cm) {
-        var ranges = cm.listSelections();
-        for (var i = 0; i < ranges.length; i++) {
-          var range = ranges[i];
-          if (!range.empty() ||
-              cm.getRange(range.head, Pos(range.head.line, range.head.ch + 1)) != right)
-            return CodeMirror.Pass;
-        }
-        cm.execCommand("goCharRight");
-      };
-    })(pairs.charAt(i), pairs.charAt(i + 1));
-    return map;
-  }
-
-  function buildExplodeHandler(pairs) {
-    return function(cm) {
-      if (cm.getOption("disableInput")) return CodeMirror.Pass;
-      var ranges = cm.listSelections();
-      for (var i = 0; i < ranges.length; i++) {
-        if (!ranges[i].empty()) return CodeMirror.Pass;
-        var around = charsAround(cm, ranges[i].head);
-        if (!around || pairs.indexOf(around) % 2 != 0) return CodeMirror.Pass;
-      }
-      cm.operation(function() {
-        cm.replaceSelection("\n\n", null);
-        cm.execCommand("goCharLeft");
-        ranges = cm.listSelections();
-        for (var i = 0; i < ranges.length; i++) {
-          var line = ranges[i].head.line;
-          cm.indentLine(line, null, true);
-          cm.indentLine(line + 1, null, true);
-        }
-      });
-    };
   }
 });
 
@@ -9797,6 +9860,10 @@
     var inner = CodeMirror.innerMode(cm.getMode(), token.state);
     if (inner.mode.name != "css") return;
 
+    if (token.type == "keyword" && "!important".indexOf(token.string) == 0)
+      return {list: ["!important"], from: CodeMirror.Pos(cur.line, token.start),
+              to: CodeMirror.Pos(cur.line, token.end)};
+
     var start = token.start, end = cur.ch, word = token.string.slice(0, end - start);
     if (/[^\w$_-]/.test(word)) {
       word = ""; start = end = cur.ch;
@@ -10463,6 +10530,7 @@
 
   function onChange(cm) {
     var state = cm.state.lint;
+    if (!state) return;
     clearTimeout(state.timeout);
     state.timeout = setTimeout(function(){startLinting(cm);}, state.options.delay || 500);
   }
@@ -10488,6 +10556,7 @@
       clearMarks(cm);
       cm.off("change", onChange);
       CodeMirror.off(cm.getWrapperElement(), "mouseover", cm.state.lint.onMouseOver);
+      clearTimeout(cm.state.lint.timeout);
       delete cm.state.lint;
     }
 
@@ -10960,12 +11029,14 @@ CodeMirror.overlayMode = function(base, overlay, combine) {
 
   CodeMirror.modeInfo = [
     {name: "APL", mime: "text/apl", mode: "apl", ext: ["dyalog", "apl"]},
+    {name: "PGP", mimes: ["application/pgp", "application/pgp-keys", "application/pgp-signature"], mode: "asciiarmor", ext: ["pgp"]},
     {name: "Asterisk", mime: "text/x-asterisk", mode: "asterisk", file: /^extensions\.conf$/i},
     {name: "C", mime: "text/x-csrc", mode: "clike", ext: ["c", "h"]},
     {name: "C++", mime: "text/x-c++src", mode: "clike", ext: ["cpp", "c++", "cc", "cxx", "hpp", "h++", "hh", "hxx"], alias: ["cpp"]},
     {name: "Cobol", mime: "text/x-cobol", mode: "cobol", ext: ["cob", "cpy"]},
     {name: "C#", mime: "text/x-csharp", mode: "clike", ext: ["cs"], alias: ["csharp"]},
     {name: "Clojure", mime: "text/x-clojure", mode: "clojure", ext: ["clj"]},
+    {name: "CMake", mime: "text/x-cmake", mode: "cmake", ext: ["cmake", "cmake.in"], file: /^CMakeLists.txt$/},
     {name: "CoffeeScript", mime: "text/x-coffeescript", mode: "coffeescript", ext: ["coffee"], alias: ["coffee", "coffee-script"]},
     {name: "Common Lisp", mime: "text/x-common-lisp", mode: "commonlisp", ext: ["cl", "lisp", "el"], alias: ["lisp"]},
     {name: "Cypher", mime: "application/x-cypher-query", mode: "cypher", ext: ["cyp", "cypher"]},
@@ -11051,7 +11122,6 @@ CodeMirror.overlayMode = function(base, overlay, combine) {
     {name: "Slim", mimes: ["text/x-slim", "application/x-slim"], mode: "slim", ext: ["slim"]},
     {name: "Smalltalk", mime: "text/x-stsrc", mode: "smalltalk", ext: ["st"]},
     {name: "Smarty", mime: "text/x-smarty", mode: "smarty", ext: ["tpl"]},
-    {name: "SmartyMixed", mime: "text/x-smarty", mode: "smartymixed"},
     {name: "Solr", mime: "text/x-solr", mode: "solr"},
     {name: "Soy", mime: "text/x-soy", mode: "soy", ext: ["soy"], alias: ["closure template"]},
     {name: "SPARQL", mime: "application/sparql-query", mode: "sparql", ext: ["rq", "sparql"], alias: ["sparul"]},
@@ -11067,6 +11137,7 @@ CodeMirror.overlayMode = function(base, overlay, combine) {
     {name: "Tiki wiki", mime: "text/tiki", mode: "tiki"},
     {name: "TOML", mime: "text/x-toml", mode: "toml", ext: ["toml"]},
     {name: "Tornado", mime: "text/x-tornado", mode: "tornado"},
+    {name: "troff", mime: "troff", mode: "troff", ext: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]},
     {name: "Turtle", mime: "text/turtle", mode: "turtle", ext: ["ttl"]},
     {name: "TypeScript", mime: "application/typescript", mode: "javascript", ext: ["ts"], alias: ["ts"]},
     {name: "VB.NET", mime: "text/x-vb", mode: "vb", ext: ["vb"]},
@@ -11075,7 +11146,7 @@ CodeMirror.overlayMode = function(base, overlay, combine) {
     {name: "Verilog", mime: "text/x-verilog", mode: "verilog", ext: ["v"]},
     {name: "XML", mimes: ["application/xml", "text/xml"], mode: "xml", ext: ["xml", "xsl", "xsd"], alias: ["rss", "wsdl", "xsd"]},
     {name: "XQuery", mime: "application/xquery", mode: "xquery", ext: ["xy", "xquery"]},
-    {name: "YAML", mime: "text/x-yaml", mode: "yaml", ext: ["yaml"], alias: ["yml"]},
+    {name: "YAML", mime: "text/x-yaml", mode: "yaml", ext: ["yaml", "yml"], alias: ["yml"]},
     {name: "Z80", mime: "text/x-z80", mode: "z80", ext: ["z80"]}
   ];
   // Ensure all modes have a mime property for backwards compatibility
@@ -11530,7 +11601,8 @@ CodeMirror.defineMode("clike", function(config, parserConfig) {
         stream.eatWhile(/[\w\$_\xa1-\uffff]/);
         return "atom";
       }
-    }
+    },
+    modeProps: {closeBrackets: {triples: '"'}}
   });
 
   def(["x-shader/x-vertex", "x-shader/x-fragment"], {
@@ -11862,6 +11934,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     if (type == "{" || type == "}") return popAndPass(type, stream, state);
     if (type == ")") return popContext(state);
     if (type == "(") return pushContext(state, stream, "parens");
+    if (type == "interpolation") return pushContext(state, stream, "interpolation");
     if (type == "word") wordAsValue(stream);
     return "parens";
   };
@@ -13118,6 +13191,10 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
   }
   function classBody(type, value) {
     if (type == "variable" || cx.style == "keyword") {
+      if (value == "static") {
+        cx.marked = "keyword";
+        return cont(classBody);
+      }
       cx.marked = "property";
       if (value == "get" || value == "set") return cont(classGetterSetter, functiondef, classBody);
       return cont(functiondef, classBody);
@@ -13238,6 +13315,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
     blockCommentEnd: jsonMode ? null : "*/",
     lineComment: jsonMode ? null : "//",
     fold: "brace",
+    closeBrackets: "()[]{}''\"\"``",
 
     helperType: jsonMode ? "json" : "javascript",
     jsonldMode: jsonldMode,
@@ -14083,7 +14161,7 @@ CodeMirror.defineMode("properties", function() {
         state.position = "quote";
         return null;
       } else if (ch === "\\" && state.position === "quote") {
-        if (stream.next() !== "u") {    // u = Unicode sequence \u1234
+        if (stream.eol()) {  // end of line?
           // Multiline value
           state.nextMultiline = true;
         }
