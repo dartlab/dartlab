@@ -28,7 +28,7 @@ class DartPreview extends PolymerElement {
 
   DartPreview.created()
       : super.created(),
-        previewTemplate = window.navigator.userAgent.contains("Dart") ? new DartVMPreviewTemplate() : new JavaScriptPreviewTemplate();
+        previewTemplate = window.navigator.userAgent.contains("Dart") ? new DartVMPreviewTemplate() : new ServerJavaScriptPreviewTemplate();
 
   PolymerJob dartJob, htmlJob;
 
@@ -73,12 +73,24 @@ class DartVMPreviewTemplate extends PreviewTemplate {
   String _toScriptTag(String dartUri) => '''<script type="application/dart" src="$dartUri"></script><script data-pub-inline src="packages/browser/dart.js"></script>''';
 }
 
-class JavaScriptPreviewTemplate extends PreviewTemplate {
+abstract class JavaScriptPreviewTemplate extends PreviewTemplate {
+  String _toScriptTag(String dartUri) => '''<script type="application/javascript" src="$dartUri"></script>''';
+}
+
+class ServerJavaScriptPreviewTemplate extends JavaScriptPreviewTemplate {
+  Future<String> toDartUrl(String dart) => //
+    HttpRequest.request("https://dart-services.appspot.com/api/dartservices/v1/compile", method: 'POST', sendData: JSON.encode({"source": dart})) //
+    .then((HttpRequest r) => r.responseText) //
+    .then(JSON.decode) //
+    .then((Map response) => _toBase64('application/javascript', response["result"]));
+}
+
+class ClientJavaScriptPreviewTemplate extends JavaScriptPreviewTemplate {
   final Completer _ready = new Completer();
 
   CompilationProcess compilationProcess;
 
-  JavaScriptPreviewTemplate() {
+  ClientJavaScriptPreviewTemplate() {
     ReceivePort port = new ReceivePort();
     // https://try.dartlang.org/compiler_isolate.dart.js
     Isolate.spawnUri(Uri.base.resolve('compiler_isolate.js'), const <String>[], port.sendPort).then((Isolate isolate) {
@@ -95,8 +107,6 @@ class JavaScriptPreviewTemplate extends PreviewTemplate {
   }
 
   Future<String> toDartUrl(String dart) => _ready.future.then((_) => compilationProcess.start(dart).then((javascript) => _toBase64('application/javascript', javascript)));
-
-  String _toScriptTag(String dartUri) => '''<script type="application/javascript" src="$dartUri"></script>''';
 }
 
 class CompilationProcess {
