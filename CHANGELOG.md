@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0
+
+* Server side compilation thanks to Dart services
+
 ## 0.5.0
 
 * Upgrade to Polymer 0.16
