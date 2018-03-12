@@ -1,6 +1,6 @@
 # DartLab
 
-Test and share your Dart script on [Dartlab.github.io](http://dartlab.github.io).
+Test and share your Dart script on [dartlab.github.io](http://dartlab.github.io).
 
 [![Build Status](https://drone.io/github.com/dartlab/dartlab/status.png)](https://drone.io/github.com/dartlab/dartlab/latest)
 
