@@ -1,12 +1,12 @@
 # DartLab
 
-Test and share your Dart script on [DartLab.org](http://dartlab.org).
+Test and share your Dart script on [Dartlab.github.io](http://dartlab.github.io).
 
 [![Build Status](https://drone.io/github.com/dartlab/dartlab/status.png)](https://drone.io/github.com/dartlab/dartlab/latest)
 
 #### Author
 
-DartLab is created by Guillaume Girou ([Google+](https://plus.google.com/+GuillaumeGirou), [Twitter](https://twitter.com/GirouGuillaume), [GitHub](https://github.com/ggirou)).
+DartLab was created by Guillaume Girou ([Google+](https://plus.google.com/+GuillaumeGirou), [Twitter](https://twitter.com/GirouGuillaume), [GitHub](https://github.com/ggirou)).
 
 #### Source
 
